@@ -1,32 +1,32 @@
 package com.jobPortal.Controller;
-
-import com.jobPortal.DTO.Signup;
+import com.jobPortal.DTO.LoginDTO;
+import com.jobPortal.DTO.SignupDTO;
 import com.jobPortal.Service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/user")
+@RequestMapping("/api/v1/auth")
 public class UserController {
-
     private final UserService userServices;
     public UserController(UserService userServices) {
         this.userServices = userServices;
     }
 
-    @RequestMapping("test")
+    @GetMapping("test")
     public ResponseEntity<String> test(){
         return new ResponseEntity<>("welcome", HttpStatus.OK);
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<?> signup(@Valid @RequestBody Signup signupRequest){
+    public ResponseEntity<?> signup(@Valid @RequestBody SignupDTO signupRequest){
         return userServices.signup(signupRequest);
     }
 
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@Valid @RequestBody LoginDTO loginRequest){
+        return userServices.login(loginRequest);
+    }
 }

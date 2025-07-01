@@ -14,3 +14,7 @@ spring:
     hibernate:
       ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO}
     database-platform: ${SPRING_JPA_DATABASE_PLATFORM}
+jwt:
+  secret-key: ${JWT_SECRET}
+  refresh-token-expiration: 604800000    # 7 days 1000 * 60 * 60 * 24*7
+  token-expiration: 86400000  # 24 hrs  1000 * 60 * 60 * 24
