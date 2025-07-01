@@ -23,7 +23,7 @@ public class Skill {
 
     // Optional: Track which users or job posts use this skill
     @ManyToMany(mappedBy = "skills")
-    private List<User> users = new ArrayList<>();
+    private List<Student> students = new ArrayList<>();
 
     @ManyToMany(mappedBy = "requiredSkills")
     private List<JobPost> jobPosts = new ArrayList<>();

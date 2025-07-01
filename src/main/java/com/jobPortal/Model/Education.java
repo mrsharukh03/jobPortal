@@ -1,5 +1,4 @@
 package com.jobPortal.Model;
-
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -26,6 +25,6 @@ public class Education {
     private String gradeValue;       // e.g., 8.2, or 78%
 
     @ManyToOne
-    @JoinColumn(name = "user_id")
-    private User user;
+    @JoinColumn(name = "student_id")  // referring Student's PK
+    private Student student;
 }

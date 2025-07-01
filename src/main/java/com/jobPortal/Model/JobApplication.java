@@ -23,10 +23,10 @@ public class JobApplication {
     @Enumerated(EnumType.STRING)
     private ApplicationStatus status = ApplicationStatus.PENDING;
 
-    // 🔗 User who applied
+    // 🔗 Students who applied
     @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @JoinColumn(name = "student_id", nullable = false)
+    private Student student;
     // 🔗 Job that was applied to
     @ManyToOne
     @JoinColumn(name = "job_post_id", nullable = false)

@@ -19,16 +19,15 @@ public class Recruiter {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String recruiterName;
-    private String email;
-    private String password;
+    @OneToOne
+    @MapsId
+    private User user;
     private String phone;
-
+    @Lob
+    @Column(name = "profile_image", columnDefinition = "LONGBLOB")
+    private byte[] profileImage;
     private String companyName;
     private String designation; // e.g. HR, Manager, Recruiter
-
-    private String role = "RECRUITER";
-
     private boolean isVerified = false; // Admin can verify
     private boolean isActive = true;
 
