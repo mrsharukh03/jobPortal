@@ -1,5 +1,6 @@
 package com.jobPortal.Model;
 
+import com.jobPortal.Enums.MarriageStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -7,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,20 +27,19 @@ public class Student {
     private User user;
     private String phone;
     private String gender;
+    private Date DOB;
+    @Enumerated(EnumType.STRING)
+    private MarriageStatus marriageStatus;
 
     @Column(unique = true, updatable = false)
     private String publicId;
-
     private String linkedinProfile;
     private String githubProfile;
+    @Column(name = "profile_image")
+    private String profileImage;
 
-    @Lob
-    @Column(name = "profile_image", columnDefinition = "LONGBLOB")
-    private byte[] profileImage;
-
-    @Lob
-    @Column(name = "resume", columnDefinition = "LONGBLOB")
-    private byte[] resume;
+    @Column(name = "resume")
+    private String resumeUrl;
 
     @ManyToMany
     @JoinTable(

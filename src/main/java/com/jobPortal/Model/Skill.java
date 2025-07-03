@@ -28,9 +28,6 @@ public class Skill {
     @ManyToMany(mappedBy = "requiredSkills")
     private List<JobPost> jobPosts = new ArrayList<>();
 
-    @Enumerated(EnumType.STRING)
-    private SkillLevel level;
-
 }
 
 

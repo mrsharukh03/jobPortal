@@ -5,16 +5,26 @@ spring:
     address: ${SPRING_SERVER_ADDRESS}
     port: ${SPRING_SERVER_PORT}
 
+  servlet:
+    multipart:
+      max-file-size: 15MB
+      max-request-size: 15MB
+
   datasource:
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: ${SPRING_DATASOURCE_DRIVER_CLASS_NAME}
+
   jpa:
     hibernate:
       ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO}
     database-platform: ${SPRING_JPA_DATABASE_PLATFORM}
+
 jwt:
   secret-key: ${JWT_SECRET}
-  refresh-token-expiration: 604800000    # 7 days 1000 * 60 * 60 * 24*7
-  token-expiration: 86400000  # 24 hrs  1000 * 60 * 60 * 24
+  refresh-token-expiration: 604800000    # 7 days
+  token-expiration: 86400000             # 1 day
+
+file:
+  upload-dir: C:\Users\LENOVO\Downloads\Spring_Projects

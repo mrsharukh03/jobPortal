@@ -1,9 +1,15 @@
 package com.jobPortal.Service;
 
-import com.jobPortal.DTO.LoginDTO;
-import com.jobPortal.DTO.SignupDTO;
+import com.jobPortal.DTO.AuthDTO.LoginDTO;
+import com.jobPortal.DTO.AuthDTO.SignupDTO;
 import com.jobPortal.Enums.Role;
+import com.jobPortal.Model.Admin;
+import com.jobPortal.Model.Recruiter;
+import com.jobPortal.Model.Student;
 import com.jobPortal.Model.User;
+import com.jobPortal.Repositorie.AdminRepository;
+import com.jobPortal.Repositorie.RecruiterRepository;
+import com.jobPortal.Repositorie.StudentRepository;
 import com.jobPortal.Repositorie.UserRepository;
 import com.jobPortal.Security.JWTUtils;
 import lombok.extern.log4j.Log4j2;
@@ -21,12 +27,18 @@ import java.util.Map;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final StudentRepository studentRepository;
+    private final RecruiterRepository recruiterRepository;
+    private final AdminRepository adminRepository;
     private final ModelMapper modelMapper;
     private final PasswordEncoder passwordEncoder;
     private final JWTUtils jwtUtils;
 
-    public UserService(UserRepository userRepository, ModelMapper modelMapper, PasswordEncoder passwordEncoder, JWTUtils jwtUtils) {
+    public UserService(UserRepository userRepository, StudentRepository studentRepository, RecruiterRepository recruiterRepository, AdminRepository adminRepository, ModelMapper modelMapper, PasswordEncoder passwordEncoder, JWTUtils jwtUtils) {
         this.userRepository = userRepository;
+        this.studentRepository = studentRepository;
+        this.recruiterRepository = recruiterRepository;
+        this.adminRepository = adminRepository;
         this.modelMapper = modelMapper;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtils = jwtUtils;
@@ -84,4 +96,32 @@ public class UserService {
         return userRepository.existsByEmail(email);
     }
 
+    public ResponseEntity<?> verifyUser(String email) {
+        if(!existsByEmail(email)) return new ResponseEntity<>("User not exist",HttpStatus.NOT_FOUND);
+        try{
+        User user = userRepository.findByEmail(email);
+        if (!user.isVerified()){
+            user.setVerified(true);
+            userRepository.save(user);
+            if(user.getRole() == Role.STUDENT){
+                Student newStudent = new Student();
+                newStudent.setUser(user);
+                studentRepository.save(newStudent);
+            } else if (user.getRole() == Role.RECRUITER) {
+                Recruiter newRecuriter = new Recruiter();
+                newRecuriter.setUser(user);
+                recruiterRepository.save(newRecuriter);
+            }else {
+                Admin admin = new Admin();
+                admin.setUser(user);
+                adminRepository.save(admin);
+            }
+        return new ResponseEntity<>("Verification Success",HttpStatus.OK);
+        }
+        return new ResponseEntity<>("User Alerdy Verified",HttpStatus.ALREADY_REPORTED);
+        }catch (Exception e){
+            log.error("Error verifying user");
+            return new ResponseEntity<>("Something went wrong",HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }

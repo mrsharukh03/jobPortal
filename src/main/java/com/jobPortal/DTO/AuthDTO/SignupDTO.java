@@ -1,15 +1,18 @@
-package com.jobPortal.DTO;
+package com.jobPortal.DTO.AuthDTO;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
+import com.jobPortal.Enums.Role;
+import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Data @NoArgsConstructor @AllArgsConstructor
-public class LoginDTO {
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class SignupDTO {
+
+    @NotBlank(message = "Full name is required")
+    private String fullName;
 
     @NotBlank(message = "Email is required")
     @Email(message = "Email should be valid")
@@ -22,4 +25,7 @@ public class LoginDTO {
             message = "Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character"
     )
     private String password;
+
+    @NotNull(message = "Role is required")
+    private Role role;
 }

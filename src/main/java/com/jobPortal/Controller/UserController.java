@@ -1,6 +1,6 @@
 package com.jobPortal.Controller;
-import com.jobPortal.DTO.LoginDTO;
-import com.jobPortal.DTO.SignupDTO;
+import com.jobPortal.DTO.AuthDTO.LoginDTO;
+import com.jobPortal.DTO.AuthDTO.SignupDTO;
 import com.jobPortal.Service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -28,5 +28,10 @@ public class UserController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginDTO loginRequest){
         return userServices.login(loginRequest);
+    }
+
+    @PostMapping("/verify/{email}")
+    public ResponseEntity<?> verifyUser(@PathVariable String email){
+        return userServices.verifyUser(email);
     }
 }

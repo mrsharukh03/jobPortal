@@ -23,5 +23,6 @@ public class User {
     @Enumerated(EnumType.STRING)
     private Role role;
 
-    private boolean isActive = true;
+    private boolean isActive = false;
+    private boolean isVerified = false;
 }
