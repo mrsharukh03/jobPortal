@@ -1,6 +1,7 @@
 package com.jobPortal.Model;
 
 import com.jobPortal.Enums.ApplicationStatus;
+import com.jobPortal.Model.Users.Student;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -22,6 +23,7 @@ public class JobApplication {
 
     @Enumerated(EnumType.STRING)
     private ApplicationStatus status = ApplicationStatus.PENDING;
+    private boolean selection = false;
 
     // 🔗 Students who applied
     @ManyToOne
@@ -31,5 +33,6 @@ public class JobApplication {
     @ManyToOne
     @JoinColumn(name = "job_post_id", nullable = false)
     private JobPost jobPost;
+    private String resumeUrl;
     private String coverLetter; // Optional
 }

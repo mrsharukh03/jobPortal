@@ -1,6 +1,6 @@
 package com.jobPortal.Repositorie;
 
-import com.jobPortal.Model.User;
+import com.jobPortal.Model.Users.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

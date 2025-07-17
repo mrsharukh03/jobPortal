@@ -1,6 +1,7 @@
 package com.jobPortal.DTO.MultiUseDTO;
 
 import com.jobPortal.Enums.ApplicationStatus;
+import com.jobPortal.Enums.JobType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -18,7 +19,7 @@ public class ApplicationDTO {
     private String jobTitle;
     private String companyName;      // From Recruiter
     private String location;
-    private String type;             // e.g., Full-Time, Internship
+    private JobType type;             // e.g., Full-Time, Internship
     private int salary;
     private String coverLetter;      // Optional, for info
 

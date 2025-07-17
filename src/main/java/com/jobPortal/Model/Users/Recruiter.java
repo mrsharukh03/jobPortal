@@ -1,35 +1,34 @@
-package com.jobPortal.Model;
+package com.jobPortal.Model.Users;
 
-
+import com.jobPortal.Model.JobPost;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
+import lombok.*;
 import java.util.*;
 
 @Entity
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @Table(name = "recruiters")
 public class Recruiter {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     @OneToOne
     @MapsId
     private User user;
+
     private String phone;
-    @Lob
-    @Column(name = "profile_image", columnDefinition = "LONGBLOB")
     private String profileImageUrl;
+    private String linkedInProfile;
     private String companyName;
-    private String designation; // e.g. HR, Manager, Recruiter
-    private boolean isVerified = false; // Admin can verify
+    private String designation; // HR, Manager, etc.
+    private String location;
     private boolean isActive = true;
+
     @OneToMany(mappedBy = "recruiter", cascade = CascadeType.ALL)
     private List<JobPost> jobPosts = new ArrayList<>();
+
 }

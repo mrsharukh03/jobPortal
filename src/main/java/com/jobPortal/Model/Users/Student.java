@@ -1,6 +1,9 @@
-package com.jobPortal.Model;
+package com.jobPortal.Model.Users;
 
 import com.jobPortal.Enums.MarriageStatus;
+import com.jobPortal.Model.Education;
+import com.jobPortal.Model.JobApplication;
+import com.jobPortal.Model.Skill;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -16,7 +19,7 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = {"profileImage", "resume"})
+@ToString(exclude = {"profileImage"})
 public class Student {
 
     @Id
@@ -48,14 +51,10 @@ public class Student {
             inverseJoinColumns = @JoinColumn(name = "skill_id")
     )
     private List<Skill> skills = new ArrayList<>();
-
     @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Education> educationList = new ArrayList<>();
-
-
     @OneToMany(mappedBy = "student")
     private List<JobApplication> applications = new ArrayList<>();
-
     @PrePersist
     public void initializePublicId() {
         if (this.publicId == null) {

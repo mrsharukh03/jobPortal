@@ -1,5 +1,5 @@
 package com.jobPortal.Model;
-import com.jobPortal.Enums.SkillLevel;
+import com.jobPortal.Model.Users.Student;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;

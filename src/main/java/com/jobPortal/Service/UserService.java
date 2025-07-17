@@ -1,12 +1,14 @@
 package com.jobPortal.Service;
 
 import com.jobPortal.DTO.AuthDTO.LoginDTO;
+import com.jobPortal.DTO.AuthDTO.ForgetPasswordRequest;
 import com.jobPortal.DTO.AuthDTO.SignupDTO;
+import com.jobPortal.DTO.OTPRequestDTO;
 import com.jobPortal.Enums.Role;
-import com.jobPortal.Model.Admin;
-import com.jobPortal.Model.Recruiter;
-import com.jobPortal.Model.Student;
-import com.jobPortal.Model.User;
+import com.jobPortal.Model.Users.Admin;
+import com.jobPortal.Model.Users.Recruiter;
+import com.jobPortal.Model.Users.Student;
+import com.jobPortal.Model.Users.User;
 import com.jobPortal.Repositorie.AdminRepository;
 import com.jobPortal.Repositorie.RecruiterRepository;
 import com.jobPortal.Repositorie.StudentRepository;
@@ -45,7 +47,7 @@ public class UserService {
     }
 
     public ResponseEntity<?> signup(SignupDTO signupRequest) {
-        if(!existsByEmail(signupRequest.getEmail())){
+        if(existsByEmail(signupRequest.getEmail())){
             User user = new User();
             user.setFullName(signupRequest.getFullName());
             user.setEmail(signupRequest.getEmail());
@@ -57,6 +59,7 @@ public class UserService {
                 return new ResponseEntity<>("Signup as Admin is not Allowed", HttpStatus.BAD_REQUEST);
             }
             try {
+                OTPServices.sendOTP(user.getEmail());
                 userRepository.save(user);
             } catch (Exception e) {
                 log.error("Error during Signup", e);
@@ -68,14 +71,14 @@ public class UserService {
     }
 
     public ResponseEntity<?> login(LoginDTO loginRequest) {
-        if(!existsByEmail(loginRequest.getEmail())){
+        if(existsByEmail(loginRequest.getEmail())){
             return new ResponseEntity<>("User Not Exist", HttpStatus.NOT_FOUND);
         }
-
         try {
             User existingUser = userRepository.findByEmail(loginRequest.getEmail());
-            if(existingUser != null){
-                if(passwordEncoder.matches(loginRequest.getPassword(), existingUser.getPassword())) {
+            if(existingUser == null) return new ResponseEntity<>("User Not Exist", HttpStatus.NOT_FOUND);
+            if(!existingUser.isVerified()) return new ResponseEntity<>("Please verify your email", HttpStatus.BAD_REQUEST);
+            if(passwordEncoder.matches(loginRequest.getPassword(), existingUser.getPassword())) {
                     Map<String,String> response = new HashMap<>();
                     response.put("token", jwtUtils.generateToken(existingUser.getEmail(), existingUser.getRole().toString()));
                     response.put("refreshToken", jwtUtils.generateRefreshToken(existingUser.getEmail(), existingUser.getRole().toString()));
@@ -83,9 +86,6 @@ public class UserService {
                 } else {
                     return new ResponseEntity<>("Invalid Password", HttpStatus.UNAUTHORIZED);
                 }
-            } else {
-                return new ResponseEntity<>("User Not Exist", HttpStatus.NOT_FOUND);
-            }
         } catch (Exception e) {
             log.error("Error during login", e);
             return new ResponseEntity<>("Something went wrong!!", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -93,14 +93,20 @@ public class UserService {
     }
 
     private boolean existsByEmail(String email){
-        return userRepository.existsByEmail(email);
+        return !userRepository.existsByEmail(email);
     }
 
-    public ResponseEntity<?> verifyUser(String email) {
-        if(!existsByEmail(email)) return new ResponseEntity<>("User not exist",HttpStatus.NOT_FOUND);
+    public ResponseEntity<?> verifyUser(OTPRequestDTO requestDTO) {
+        if(existsByEmail(requestDTO.getEmail())) return new ResponseEntity<>("User not exist",HttpStatus.NOT_FOUND);
         try{
-        User user = userRepository.findByEmail(email);
-        if (!user.isVerified()){
+        User user = userRepository.findByEmail(requestDTO.getEmail());
+        if (user.isVerified()){
+            return new ResponseEntity<>("User Already Verified",HttpStatus.ALREADY_REPORTED);
+        }
+            Map<String, String> verification = OTPServices.verifyOTP(requestDTO.getEmail(), requestDTO.getOtp());
+        if (verification.get("status").equalsIgnoreCase("false")){
+            return new ResponseEntity<>("Verification Failed"+verification.get("msg"),HttpStatus.BAD_REQUEST);
+        }
             user.setVerified(true);
             userRepository.save(user);
             if(user.getRole() == Role.STUDENT){
@@ -117,11 +123,44 @@ public class UserService {
                 adminRepository.save(admin);
             }
         return new ResponseEntity<>("Verification Success",HttpStatus.OK);
-        }
-        return new ResponseEntity<>("User Alerdy Verified",HttpStatus.ALREADY_REPORTED);
         }catch (Exception e){
             log.error("Error verifying user");
             return new ResponseEntity<>("Something went wrong",HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public ResponseEntity<?> resendOTP(String email) {
+        try {
+            User user = userRepository.findByEmail(email);
+            if(user == null) return new ResponseEntity<>("User Not found",HttpStatus.NOT_FOUND);
+            Map<String,String> isSentOTP = OTPServices.sendOTP(user.getEmail());
+            if(isSentOTP.get("status").equalsIgnoreCase("false")){
+                return new ResponseEntity<>(isSentOTP.get("msg"),HttpStatus.NOT_FOUND);
+            }
+            return new ResponseEntity<>("We have sent an otp",HttpStatus.NOT_FOUND);
+        }catch (Exception e){
+            return new ResponseEntity<>("Something went wrong",HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public ResponseEntity<?> resetPassword(ForgetPasswordRequest passeordRequest) {
+        if(passeordRequest.getEmail() == null || passeordRequest.getPassword() == null || passeordRequest.getOtp() == null){
+            return new ResponseEntity<>("Invalid Argument",HttpStatus.BAD_REQUEST);
+        }
+        try {
+            User user = userRepository.findByEmail(passeordRequest.getEmail());
+            if(user == null) return new ResponseEntity<>("User Not found",HttpStatus.NOT_FOUND);
+            Map<String, String> verification = OTPServices.verifyOTP(passeordRequest.getEmail(), passeordRequest.getOtp());
+            if(verification.get("status").equalsIgnoreCase("true")){
+                user.setPassword(passwordEncoder.encode(passeordRequest.getPassword()));
+                userRepository.save(user);
+                return new ResponseEntity<>("Password change successfully",HttpStatus.OK);
+            }else {
+                return new ResponseEntity<>(verification.get("msg"),HttpStatus.BAD_REQUEST);
+            }
+        }catch (Exception e){
+          log.error("error resenting password {}",e.getMessage());
+          return new ResponseEntity<>("Something went wrong",HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

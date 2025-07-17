@@ -1,4 +1,4 @@
-package com.jobPortal.Model;
+package com.jobPortal.Model.Users;
 
 import com.jobPortal.Enums.Role;
 import jakarta.persistence.*;

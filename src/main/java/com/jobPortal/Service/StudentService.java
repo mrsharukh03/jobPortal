@@ -5,6 +5,9 @@ import com.jobPortal.DTO.StudentDTO.EducationDTO;
 import com.jobPortal.DTO.StudentDTO.PersonalDetailDTO;
 import com.jobPortal.DTO.StudentDTO.StudentProfileRequestDTO;
 import com.jobPortal.Model.*;
+import com.jobPortal.Model.Users.Recruiter;
+import com.jobPortal.Model.Users.Student;
+import com.jobPortal.Model.Users.User;
 import com.jobPortal.Repositorie.SkillRepository;
 import com.jobPortal.Repositorie.StudentRepository;
 import com.jobPortal.Repositorie.UserRepository;
@@ -185,7 +188,7 @@ public class StudentService {
                     app.getStatus(),
                     job.getId(),
                     job.getTitle(),
-                    recruiter != null ? recruiter.getCompanyName() : "N/A", // null-safe
+                    recruiter.getCompanyName(),
                     job.getLocation(),
                     job.getType(),
                     job.getSalary(),
@@ -196,8 +199,6 @@ public class StudentService {
         if (applicationDTOList.isEmpty()) return new ResponseEntity<>("No Applications",HttpStatus.NOT_FOUND);
         return new ResponseEntity<>(applicationDTOList, HttpStatus.OK);
     }
-
-
 
     private ValidatedStudent validateUserAndStudent(String email) {
         User user = userRepository.findByEmail(email);

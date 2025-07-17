@@ -10,7 +10,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class EducationDTO {
-
     @NotBlank(message = "Degree is required")
     private String degree;
 

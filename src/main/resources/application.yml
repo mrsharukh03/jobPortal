@@ -21,6 +21,18 @@ spring:
       ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO}
     database-platform: ${SPRING_JPA_DATABASE_PLATFORM}
 
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
 jwt:
   secret-key: ${JWT_SECRET}
   refresh-token-expiration: 604800000    # 7 days
