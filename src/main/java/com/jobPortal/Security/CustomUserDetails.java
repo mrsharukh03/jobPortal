@@ -6,21 +6,25 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
+
 public class CustomUserDetails implements UserDetails {
 
     private String email;
     private String password;
-    private String role;
+    private List<String> roles;
 
-    public CustomUserDetails(String email,String password,String role){
+    public CustomUserDetails(String email, String password, List<String> roles){
         this.email = email;
         this.password = password;
-        this.role =role;
+        this.roles = roles;
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_"+role));
+        return roles.stream()
+                .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -35,7 +39,7 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public boolean isAccountNonExpired() {
-        return UserDetails.super.isAccountNonExpired();
+        return true;
     }
 
     @Override

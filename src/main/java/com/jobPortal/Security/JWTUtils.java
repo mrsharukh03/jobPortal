@@ -1,14 +1,14 @@
 package com.jobPortal.Security;
+import com.jobPortal.Enums.Role;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Component
 public class JWTUtils {
@@ -22,13 +22,22 @@ public class JWTUtils {
     private long refreshTokenExpirationMs;
 
 
+
     public String extractEmail(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
-    public String extractRole(String token){
-        return extractClaim(token,claims->claims.get("role",String.class));
+    public List<String> extractRole(String token){
+        Claims claims = extractAllClaims(token);
+        Object roles = claims.get("role");
+        if (roles instanceof List<?>) {
+            return ((List<?>) roles).stream()
+                    .map(Object::toString)
+                    .collect(Collectors.toList());
+        }
+        return Collections.emptyList();
     }
+
 
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
@@ -42,6 +51,7 @@ public class JWTUtils {
                     .build()
                     .parseClaimsJws(token)
                     .getBody();
+
         } catch (Exception e) {
             throw new IllegalArgumentException("Invalid JWT token", e);
         }
@@ -56,12 +66,12 @@ public class JWTUtils {
         return expiration != null && expiration.before(new Date());
     }
 
-    public String generateToken(String email,String role) {
+    public String generateToken(String email, List<Role> role) {
         Map<String,Object> claims = new HashMap<>();
         claims.put("role",role);
         return createToken(email,claims);
     }
-    public String generateRefreshToken(String email,String role) {
+    public String generateRefreshToken(String email,List<Role> role) {
         Map<String,Object> claims = new HashMap<>();
         claims.put("role",role);
         return createRefreshToken(email,claims);

@@ -26,17 +26,19 @@ spring:
     port: ${MAIL_PORT}
     username: ${MAIL_USERNAME}
     password: ${MAIL_PASSWORD}
+    senderMail: ${MAIL_USERNAME}
     properties:
       mail:
         smtp:
           auth: true
           starttls:
             enable: true
-
 jwt:
   secret-key: ${JWT_SECRET}
   refresh-token-expiration: 604800000    # 7 days
   token-expiration: 86400000             # 1 day
+app:
+  url: http://localhost:8080
 
 file:
   upload-dir: C:\Users\LENOVO\Downloads\Spring_Projects

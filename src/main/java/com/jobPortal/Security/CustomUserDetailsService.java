@@ -8,24 +8,33 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
 
 
-    private final UserRepository userRepo;
+    private final UserRepository userRepository;
     @Autowired
-    public CustomUserDetailsService(UserRepository userRepo) {
-        this.userRepo = userRepo;
+    public CustomUserDetailsService(UserRepository userRepository) {
+        this.userRepository = userRepository;
     }
 
 
     @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(String email) {
+        User user = userRepository.findByEmail(email);
 
-        User user = userRepo.findByEmail(email);
-        if(user !=null){
-            return new CustomUserDetails(user.getEmail(),user.getPassword(),user.getRole().toString());
+        if (user == null) {
+            throw new UsernameNotFoundException("User not found");
         }
-        throw new UsernameNotFoundException("User not found");
+
+        List<String> roles = user.getRole().stream()
+                .map(Enum::name)
+                .collect(Collectors.toList());
+
+        return new CustomUserDetails(user.getEmail(), user.getPassword(), roles);
     }
+
 }

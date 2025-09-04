@@ -1,5 +1,5 @@
 package com.jobPortal.Model;
-import com.jobPortal.Model.Users.Student;
+import com.jobPortal.Model.Users.Seeker;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -21,9 +21,8 @@ public class Skill {
     @Column(nullable = false, unique = true)
     private String name;
 
-    // Optional: Track which users or job posts use this skill
     @ManyToMany(mappedBy = "skills")
-    private List<Student> students = new ArrayList<>();
+    private List<Seeker> seekers = new ArrayList<>();
 
     @ManyToMany(mappedBy = "requiredSkills")
     private List<JobPost> jobPosts = new ArrayList<>();

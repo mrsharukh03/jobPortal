@@ -1,51 +1,31 @@
 package com.jobPortal.Controller;
 
-import com.jobPortal.DTO.AuthDTO.LoginDTO;
-import com.jobPortal.DTO.AuthDTO.ForgetPasswordRequest;
-import com.jobPortal.DTO.AuthDTO.SignupDTO;
-import com.jobPortal.DTO.OTPRequestDTO;
+
 import com.jobPortal.Service.UserService;
-import jakarta.validation.Valid;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.websocket.server.PathParam;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/v1/auth")
-public class UserController {
-
+@RequestMapping("/api/v1/user")
+@Tag(name = "User")
+public class UserController{
     private final UserService userServices;
+
 
     public UserController(UserService userServices) {
         this.userServices = userServices;
     }
 
-    @PostMapping("/signup")
-    public ResponseEntity<?> signup(@Valid @RequestBody SignupDTO signupRequest) {
-        return userServices.signup(signupRequest);
-    }
-
-    @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginDTO loginRequest) {
-        return userServices.login(loginRequest);
-    }
-
-    @PostMapping("/verify")
-    public ResponseEntity<?> verifyUser(@Valid @RequestBody OTPRequestDTO requestDTO) {
-        return userServices.verifyUser(requestDTO);
-    }
-
-    @PostMapping("/password/forget/{email}")
-    public ResponseEntity<?> forgetPassword(@PathVariable String email) {
-        return userServices.resendOTP(email);
-    }
-
-    @PostMapping("/password/reset")
-    public ResponseEntity<?> verifyOTP(@Valid @RequestBody ForgetPasswordRequest otpDto) {
-        return userServices.resetPassword(otpDto);
-    }
-
-    @PostMapping("/otp/resend/{email}")
-    public ResponseEntity<?> resendOTP(@PathVariable String email) {
-        return userServices.resendOTP(email);
+    @PostMapping("/userRole")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<?> createJobSeekerProfile(@PathParam("role") String role, @AuthenticationPrincipal UserDetails userDetails){
+        return userServices.createUserType(role,userDetails);
     }
 }

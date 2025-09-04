@@ -10,6 +10,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -20,13 +21,19 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString(exclude = {"profileImage"})
-public class Student {
+public class Seeker {
 
     @Id
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
+
+    private LocalDateTime createdTime;
+    private LocalDateTime updateTime;
 
     @OneToOne
     @MapsId
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
     private String phone;
     private String gender;
@@ -46,15 +53,18 @@ public class Student {
 
     @ManyToMany
     @JoinTable(
-            name = "student_skills",
-            joinColumns = @JoinColumn(name = "student_id"),
+            name = "seeker_skills",
+            joinColumns = @JoinColumn(name = "seeker_id"),
             inverseJoinColumns = @JoinColumn(name = "skill_id")
     )
     private List<Skill> skills = new ArrayList<>();
-    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, orphanRemoval = true)
+
+    @OneToMany(mappedBy = "seeker", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Education> educationList = new ArrayList<>();
-    @OneToMany(mappedBy = "student")
+
+    @OneToMany(mappedBy = "seeker")
     private List<JobApplication> applications = new ArrayList<>();
+
     @PrePersist
     public void initializePublicId() {
         if (this.publicId == null) {

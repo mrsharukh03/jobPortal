@@ -25,7 +25,4 @@ public class SignupDTO {
             message = "Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character"
     )
     private String password;
-
-    @NotNull(message = "Role is required")
-    private Role role;
 }

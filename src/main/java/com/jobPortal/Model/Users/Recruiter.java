@@ -3,6 +3,8 @@ package com.jobPortal.Model.Users;
 import com.jobPortal.Model.JobPost;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Entity
@@ -14,11 +16,14 @@ import java.util.*;
 public class Recruiter {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
     @OneToOne
     @MapsId
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
+    private LocalDateTime createdTime;
+    private LocalDateTime updateTime;
 
     private String phone;
     private String profileImageUrl;
