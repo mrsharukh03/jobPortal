@@ -294,6 +294,7 @@ public class UserService {
         try {
             User user = userRepository.findByEmail(userDetails.getUsername());
             if (user == null) return new ResponseEntity<>("User not found",HttpStatus.NOT_FOUND);
+
             if (role.equals(Role.ADMIN.toString()) || role.equals(Role.SUPER_ADMIN.toString())){
                 return new ResponseEntity<>("Invalid Operation",HttpStatus.BAD_REQUEST);
             }
@@ -321,5 +322,128 @@ public class UserService {
         return new ResponseEntity<>("Something went wrong",HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return new ResponseEntity<>("Profile created successfully",HttpStatus.CREATED);
+    }
+
+    public ResponseEntity<?> getUserRoleAndProfileStatus(String username) {
+        try {
+            User user = userRepository.findByEmail(username);
+            if (user == null) return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
+            Map<String,String> response = new HashMap<>();
+            List<Role> userRoles = user.getRole();
+            if(userRoles.contains(Role.RECRUITER)) {
+                Recruiter recruiter = recruiterRepository.findByUser(user);
+                if(recruiter != null){
+                    response.put("role","RECRUITER");
+                    response.put("profileCompletion", recruiter.isProfileComplete() ? "true" : "false");
+                }
+            } else if (userRoles.contains(Role.SEEKER)) {
+                Seeker seeker = seekerRepository.findByUser(user);
+                if(seeker != null){
+                    response.put("role","SEEKER");
+                    response.put("profileCompletion", seeker.isProfileComplete() ? "true" : "false");
+                }
+            } else if (userRoles.contains(Role.USER)) {
+                response.put("role","USER");
+                response.put("profileCompletion","true"); // default
+            }
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error sending user roles {}", e.getMessage());
+            return new ResponseEntity<>("Something went wrong", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+    public ResponseEntity<?> getAllAlerts(String email) {
+        try {
+            User user = userRepository.findByEmail(email);
+            if (user == null) {
+                return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
+            }
+            List<String> alerts = new ArrayList<>();
+
+            if (!user.isVerified()) {
+                alerts.add("Email verification needed.");
+            }
+
+            List<Role> roles = user.getRole();
+
+            if (roles.contains(Role.SEEKER)) {
+                Seeker seeker = seekerRepository.findByUser(user);
+                if (seeker != null) {
+                    boolean profileComplete =
+                            seeker.getResume() != null && !(seeker.getResume() == null) &&
+                                    seeker.getPhone() != null &&
+                                    seeker.getGender() != null &&
+                                    seeker.getEducationList() != null && !seeker.getEducationList().isEmpty();
+
+                    if (!profileComplete) {
+                        alerts.add("Your profile is incomplete.");
+                    }
+                } else {
+                    alerts.add("Please choose your role.");
+                }
+
+            } else if (roles.contains(Role.RECRUITER)) {
+                Recruiter recruiter = recruiterRepository.findByUser(user);
+                if (recruiter != null) {
+                    boolean profileComplete =
+                            recruiter.getCompanyName() != null && !recruiter.getCompanyName().isEmpty() &&
+                                    recruiter.getDesignation() != null && !recruiter.getDesignation().isEmpty() &&
+                                    recruiter.getPhone() != null &&
+                                    recruiter.getLocation() != null && !recruiter.getLocation().isEmpty();
+
+                    if (!profileComplete) {
+                        alerts.add("Your profile is incomplete.");
+                    }
+
+                    if (!user.isActive()) {
+                        alerts.add("Your account is blocked. Please contact admin.");
+                    }
+
+                } else {
+                    alerts.add("Please choose your role.");
+                }
+            }
+            return ResponseEntity.ok(alerts);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Something went wrong", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public ResponseEntity<?> getUserProfile(String username) {
+        try{
+            User user = userRepository.findByEmail(username);
+            if (user == null) {
+                return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
+            }
+            UserProfile userProfile = new UserProfile();
+            userProfile.setFullName(user.getFullName());
+            userProfile.setEmail(user.getEmail());
+            userProfile.setActive(user.isActive());
+            userProfile.setVerified(user.isVerified());
+            userProfile.setProfileURL(user.getProfileUrl());
+            userProfile.setCreatedTime(user.getCreatedTime());
+            return ResponseEntity.ok(userProfile);
+        }catch (Exception e){
+            log.error("Error fetching user profile {}",e.getMessage());
+            return new ResponseEntity<>("Something went wrong!!",HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public ResponseEntity<?> getUserProfileImage(String username) {
+        try{
+            User user = userRepository.findByEmail(username);
+            if (user == null) {
+                return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
+            }
+            UserProfile userProfile = new UserProfile();
+            userProfile.setProfileURL(user.getProfileUrl());
+            return ResponseEntity.ok(userProfile);
+        }catch (Exception e){
+            log.error("Error fetching user profile image {}",e.getMessage());
+            return new ResponseEntity<>("Something went wrong!!",HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }

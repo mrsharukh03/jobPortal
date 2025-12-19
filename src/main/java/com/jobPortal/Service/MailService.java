@@ -61,7 +61,7 @@ public class MailService {
                 %s
                 <p>These links will expire in 2 minutes. Do not share them with anyone.</p>
                 <br/>
-                <p>Regards,<br/>The XPay Team</p>
+                <p>Regards,<br/>The JobPortal Team</p>
             </body>
             </html>
             """.formatted(linksHtml.toString());

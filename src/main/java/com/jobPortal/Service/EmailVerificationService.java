@@ -59,7 +59,7 @@ public class EmailVerificationService {
     public void sendEmailVerificationLink(String email) throws Exception {
         try {
             Map<String, String> links = new HashMap<>();
-            String verificationLink = url + "/email-verify/" + generateVerificationToken(email);
+            String verificationLink = url + "/verify-email/" + generateVerificationToken(email);
             links.put("Email Verification Link", verificationLink);
 
             MailSendResult result = mailService.sendVerificationLink(email, links);

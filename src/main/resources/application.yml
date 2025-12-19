@@ -38,7 +38,8 @@ jwt:
   refresh-token-expiration: 604800000    # 7 days
   token-expiration: 86400000             # 1 day
 app:
-  url: http://localhost:8080
+    url: ${CLIENT_URL:http://localhost:5173}
+
 
 file:
   upload-dir: C:\Users\LENOVO\Downloads\Spring_Projects

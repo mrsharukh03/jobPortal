@@ -25,17 +25,23 @@ public class AuthController {
         this.userServices = userServices;
     }
 
+    @GetMapping("/health")
+    public ResponseEntity<String> health() {
+        return ResponseEntity.ok("Server is running");
+    }
+
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@Valid @RequestBody SignupDTO signupRequest) {
         return userServices.signup(signupRequest);
     }
 
 
+
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginDTO loginDTO, HttpServletResponse response) {
         try {
             AuthResponseDTO authResponse = userServices.login(loginDTO);
-
             ResponseCookie accessCookie = ResponseCookie.from("accessToken", authResponse.getAccessToken())
                     .httpOnly(true)
                     .secure(false)

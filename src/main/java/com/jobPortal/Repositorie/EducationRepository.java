@@ -1,6 +1,6 @@
 package com.jobPortal.Repositorie;
 
-import com.jobPortal.Model.Education;
+import com.jobPortal.Model.Seeker.Education;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

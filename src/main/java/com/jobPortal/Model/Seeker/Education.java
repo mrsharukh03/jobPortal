@@ -1,4 +1,4 @@
-package com.jobPortal.Model;
+package com.jobPortal.Model.Seeker;
 import com.jobPortal.Model.Users.Seeker;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

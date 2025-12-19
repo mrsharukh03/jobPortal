@@ -25,6 +25,4 @@ public class JobSeekerController {
     public ResponseEntity<?> test(){
         return new ResponseEntity<>("only for job Seekers", HttpStatus.OK);
     }
-
-
 }

@@ -1,0 +1,168 @@
+.main{
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    width: 100%;
+    background: rgb(231, 230, 230);
+}
+
+.nav{
+    background: linear-gradient(rgb(85, 5, 103),rgb(116, 16, 127));
+}
+
+.companyLogo {
+  object-fit: contain;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  transition: transform 0.3s ease;
+}
+
+.companyLogo:hover {
+  transform: scale(1.1);
+}
+
+/* Card hover effect */
+.card {
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+  cursor: pointer;
+}
+
+.card:hover {
+  box-shadow: 0 15px 35px rgba(0, 123, 255, 0.3);
+  transform: translateY(-5px);
+}
+
+/* Promo card tweak */
+.card.bg-primary h4 {
+  font-size: 1.4rem;
+}
+
+.card.bg-primary p {
+  font-size: 1rem;
+  opacity: 0.85;
+}
+
+.btn-outline-primary {
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-outline-primary:hover {
+  background-color: #0d6efd;
+  color: white;
+  border-color: #0d6efd;
+  box-shadow: 0 6px 18px rgba(13, 110, 253, 0.5);
+}
+
+.btn-light {
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-light:hover {
+  background-color: #e0e0e0;
+  box-shadow: 0 6px 18px rgba(255, 255, 255, 0.7);
+}
+
+/* Responsive tweaks */
+@media (max-width: 576px) {
+  .card {
+    padding: 1.25rem !important;
+  }
+}
+
+
+
+
+
+.banner {
+  position: relative;
+  background-image: url('https://static.vecteezy.com/system/resources/previews/000/952/735/non_2x/abstract-banner-background-vector.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  min-height: 550px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  overflow: hidden;
+  border-radius: 15px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(7px);
+  z-index: 0;
+  border-radius: 15px;
+}
+
+/* Position text/content above overlay */
+.banner > .container {
+  position: relative;
+  z-index: 1;
+}
+
+/* Search box container */
+.searchBox {
+  max-width: 900px;
+  margin: 0 auto;
+  background: rgba(255 255 255 / 0.15);
+  padding: 1.2rem 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(12px);
+}
+
+/* Input with icon wrapper */
+.inputWithIcon {
+  padding-left: 2.8rem !important;
+  border-radius: 50px;
+  background: rgba(255 255 255 / 0.9);
+  border: none;
+  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s ease;
+  color: #333;
+}
+
+.inputWithIcon:focus {
+  box-shadow: 0 0 10px #007bff;
+  outline: none;
+  background: white;
+}
+
+/* Icon inside input */
+.icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #007bff;
+  font-size: 1.25rem;
+  pointer-events: none;
+}
+
+/* Button style */
+.btn-primary {
+  border-radius: 50px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 5px 15px rgba(0, 123, 255, 0.4);
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+  box-shadow: 0 7px 20px rgba(0, 86, 179, 0.7);
+}
+
+/* Responsive tweak */
+@media (max-width: 768px) {
+  .searchBox {
+    padding: 1rem;
+  }
+}
+
+

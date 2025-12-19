@@ -1,0 +1,40 @@
+.trustBanner {
+  position: relative;
+  background-image: url('https://static.vecteezy.com/system/resources/previews/000/952/735/non_2x/abstract-banner-background-vector.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  margin: 4rem 1rem;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(7px);
+  z-index: 0;
+  border-radius: 15px;
+}
+
+.trustBanner .container {
+  position: relative;
+  z-index: 1;
+}
+
+/* Stat card inside the trust section */
+.statCard {
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(10px);
+  padding: 1rem;
+  border-radius: 12px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  color: white;
+}
+
+.statCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(255, 255, 255, 0.15);
+}

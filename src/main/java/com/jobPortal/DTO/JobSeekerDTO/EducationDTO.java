@@ -1,4 +1,4 @@
-package com.jobPortal.DTO.StudentDTO;
+package com.jobPortal.DTO.JobSeekerDTO;
 
 import jakarta.validation.constraints.*;
 

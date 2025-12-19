@@ -19,6 +19,7 @@ public class User {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
     private String fullName;
+    private String profileUrl;
     @Column(unique = true, nullable = false)
     private String email;
 
