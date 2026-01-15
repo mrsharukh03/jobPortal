@@ -1,260 +1,412 @@
 import React, { useState } from "react";
 import axiosInstance from "../Utilitys/axiosInstance";
+import {
+  FaUserTie,
+  FaBuilding,
+  FaBriefcase,
+  FaGlobe,
+  FaCheck,
+  FaArrowRight,
+  FaArrowLeft
+} from "react-icons/fa";
+import styles from "../css/FillRecruiter.module.css";
 
 const initialState = {
   phone: "",
-  companyLogoUrl: "",
-  linkedInProfile: "",
-  companyWebsite: "",
-  companyName: "",
   designation: "",
   location: "",
+  yearsOfExperience: "",
+  about: "",
+
+  companyName: "",
+  companyWebsite: "",
+  companyLogoUrl: "",
   industry: "",
   companySize: "",
   companyDescription: "",
-  yearsOfExperience: 0,
-  about: "",
-  hiringSkills: []
+
+  linkedInProfile: "",
+  hiringSkills: ""
 };
 
 function FillJobRecruiterProfile() {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState(initialState);
-  const [message, setMessage] = useState(""); // Success message
-  const [error, setError] = useState("");     // Error message
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
+
+  const steps = [
+    { id: 1, label: "Basic Info", icon: <FaUserTie /> },
+    { id: 2, label: "Company Details", icon: <FaBuilding /> },
+    { id: 3, label: "Professional", icon: <FaBriefcase /> },
+    { id: 4, label: "Social & Review", icon: <FaGlobe /> }
+  ];
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+    setErrors({ ...errors, [name]: "" }); // live clear error
   };
 
-  const handleSkills = (e) => {
-    setFormData({
-      ...formData,
-      hiringSkills: e.target.value.split(",").map(skill => skill.trim())
-    });
-  };
-
-  const next = () => setStep(step + 1);
-  const prev = () => setStep(step - 1);
-
-  const submitProfile = async () => {
+  const isValidURL = (url) => {
+    if (!url) return true;
     try {
-      const response = await axiosInstance.post(
-        "/recruiter/profile/update",
-        formData, // send DTO fields directly
-        { withCredentials: true }
-      );
-
-      setMessage(response.data); // Show backend success message
-      setError(""); // clear previous errors
-
-      // Optional redirect after 1.5 seconds
-      setTimeout(() => {
-        window.location.href = "/recruiter/dashboard";
-      }, 1500);
-
-    } catch (err) {
-      if (err.response && err.response.data) {
-        setError(err.response.data);
-      } else {
-        setError("Something went wrong");
-      }
-      setMessage(""); // clear previous success
+      new URL(url);
+      return true;
+    } catch {
+      return false;
     }
   };
 
-  const progress = (step / 4) * 100;
+  /* Step-wise validation for Next button */
+  const validateStep = () => {
+    const newErrors = {};
+
+    if (step === 1) {
+      if (!/^[0-9]{10,15}$/.test(formData.phone))
+        newErrors.phone = "Phone must be 10–15 digits (no +91)";
+      if (!formData.designation.trim())
+        newErrors.designation = "Designation is required";
+      if (!formData.location.trim())
+        newErrors.location = "Location is required";
+    }
+
+    if (step === 2) {
+      if (!formData.companyName.trim())
+        newErrors.companyName = "Company name is required";
+      if (!formData.industry.trim())
+        newErrors.industry = "Industry is required";
+      if (formData.companyDescription.length > 500)
+        newErrors.companyDescription =
+          "Company description cannot exceed 500 characters";
+      if (formData.companyWebsite && !isValidURL(formData.companyWebsite))
+        newErrors.companyWebsite = "Invalid website URL";
+      if (formData.companyLogoUrl && !isValidURL(formData.companyLogoUrl))
+        newErrors.companyLogoUrl = "Invalid logo URL";
+    }
+
+    if (step === 3) {
+      if (formData.yearsOfExperience && Number(formData.yearsOfExperience) < 0)
+        newErrors.yearsOfExperience = "Experience must be positive";
+      if (formData.about.length > 300)
+        newErrors.about = "About cannot exceed 300 characters";
+    }
+
+    if (step === 4) {
+      if (formData.linkedInProfile && !isValidURL(formData.linkedInProfile))
+        newErrors.linkedInProfile = "Invalid LinkedIn URL";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const next = () => {
+    if (validateStep()) setStep(step + 1);
+  };
+
+  const prev = () => setStep(step - 1);
+
+  const submitProfile = async () => {
+    // final validation for all steps
+    const allErrors = {};
+
+    // Step 1
+    if (!/^[0-9]{10,15}$/.test(formData.phone))
+      allErrors.phone = "Phone must be 10–15 digits (no +91)";
+    if (!formData.designation.trim())
+      allErrors.designation = "Designation is required";
+    if (!formData.location.trim())
+      allErrors.location = "Location is required";
+
+    // Step 2
+    if (!formData.companyName.trim())
+      allErrors.companyName = "Company name is required";
+    if (!formData.industry.trim()) allErrors.industry = "Industry is required";
+    if (formData.companyDescription.length > 500)
+      allErrors.companyDescription =
+        "Company description cannot exceed 500 characters";
+    if (formData.companyWebsite && !isValidURL(formData.companyWebsite))
+      allErrors.companyWebsite = "Invalid website URL";
+    if (formData.companyLogoUrl && !isValidURL(formData.companyLogoUrl))
+      allErrors.companyLogoUrl = "Invalid logo URL";
+
+    // Step 3
+    if (formData.yearsOfExperience && Number(formData.yearsOfExperience) < 0)
+      allErrors.yearsOfExperience = "Experience must be positive";
+    if (formData.about.length > 300)
+      allErrors.about = "About cannot exceed 300 characters";
+
+    // Step 4
+    if (formData.linkedInProfile && !isValidURL(formData.linkedInProfile))
+      allErrors.linkedInProfile = "Invalid LinkedIn URL";
+
+    setErrors(allErrors);
+    if (Object.keys(allErrors).length > 0) return alert("Fix errors first");
+
+    setLoading(true);
+    try {
+      const payload = {
+        ...formData,
+        yearsOfExperience: Number(formData.yearsOfExperience),
+        hiringSkills: formData.hiringSkills
+          ? formData.hiringSkills.split(",").map((s) => s.trim())
+          : []
+      };
+
+      await axiosInstance.post("/recruiter/profile/update", payload);
+
+      alert("Profile Completed Successfully!");
+      window.location.reload();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to update profile");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <main className="container mt-5 mb-5">
-      <div className="row justify-content-center">
-        <div className="col-md-8">
+    <div className={styles.container}>
+      <div className={styles.card}>
+        {/* SIDEBAR */}
+        <div className={styles.sidebar}>
+          <div className={styles.logoArea}>
+            Recruiter<span style={{ color: "white" }}>.Hub</span>
+          </div>
 
-          {/* Card */}
-          <div className="card shadow-lg border-0 rounded-4">
-
-            {/* Header */}
-            <div className="card-header bg-primary text-white text-center rounded-top-4">
-              <h4 className="mb-0">Complete Recruiter Profile</h4>
-              <small>Step {step} of 4</small>
-            </div>
-
-            {/* Progress */}
-            <div className="progress rounded-0" style={{ height: "6px" }}>
+          <div className={styles.stepsContainer}>
+            {steps.map((s) => (
               <div
-                className="progress-bar bg-success"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
+                key={s.id}
+                className={`${styles.step} ${
+                  step === s.id ? styles.active : ""
+                }`}
+              >
+                <div className={styles.stepIcon}>
+                  {step > s.id ? <FaCheck /> : s.icon}
+                </div>
+                <div className={styles.stepLabel}>{s.label}</div>
+              </div>
+            ))}
+          </div>
 
-            {/* Body */}
-            <div className="card-body p-4">
+          <div style={{ fontSize: "0.8rem", opacity: 0.5 }}>
+            © 2026 JobPortal Inc.
+          </div>
+        </div>
 
-              {/* Display messages */}
-              {message && <div className="alert alert-success">{message}</div>}
-              {error && <div className="alert alert-danger">{error}</div>}
+        {/* CONTENT */}
+        <div className={styles.content}>
+          {/* STEP 1 */}
+          {step === 1 && (
+            <>
+              <div className={styles.header}>
+                <h2 className={styles.title}>Let's start with you.</h2>
+                <p className={styles.subtitle}>
+                  Enter your contact details and role.
+                </p>
+              </div>
 
-              {/* STEP 1 */}
-              {step === 1 && (
-                <>
-                  <h5 className="mb-3">Contact Information</h5>
+              <div className={styles.grid}>
+                <div>
+                  <label className={styles.label}>Phone Number</label>
+                  <input
+                    className={styles.input}
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    placeholder="9876543210"
+                  />
+                  <small style={{ color: "red" }}>{errors.phone}</small>
+                </div>
 
-                  <div className="mb-3">
-                    <label className="form-label">Phone *</label>
-                    <input
-                      className="form-control"
-                      name="phone"
-                      placeholder="Enter phone number"
-                      onChange={handleChange}
-                    />
-                  </div>
+                <div>
+                  <label className={styles.label}>Designation</label>
+                  <input
+                    className={styles.input}
+                    name="designation"
+                    value={formData.designation}
+                    onChange={handleChange}
+                  />
+                  <small style={{ color: "red" }}>{errors.designation}</small>
+                </div>
 
-                  <div className="text-end">
-                    <button className="btn btn-primary" onClick={next}>
-                      Next →
-                    </button>
-                  </div>
-                </>
-              )}
+                <div className={styles.fullWidth}>
+                  <label className={styles.label}>Location</label>
+                  <input
+                    className={styles.input}
+                    name="location"
+                    value={formData.location}
+                    onChange={handleChange}
+                  />
+                  <small style={{ color: "red" }}>{errors.location}</small>
+                </div>
+              </div>
+            </>
+          )}
 
-              {/* STEP 2 */}
-              {step === 2 && (
-                <>
-                  <h5 className="mb-3">Company Information</h5>
+          {/* STEP 2 */}
+          {step === 2 && (
+            <>
+              <div className={styles.header}>
+                <h2 className={styles.title}>Company Information</h2>
+              </div>
 
-                  <div className="row">
-                    <div className="col-md-6 mb-3">
-                      <label className="form-label">Company Name *</label>
-                      <input className="form-control" name="companyName" onChange={handleChange} />
-                    </div>
+              <div className={styles.grid}>
+                <div className={styles.fullWidth}>
+                  <label className={styles.label}>Company Name</label>
+                  <input
+                    className={styles.input}
+                    name="companyName"
+                    value={formData.companyName}
+                    onChange={handleChange}
+                  />
+                  <small style={{ color: "red" }}>{errors.companyName}</small>
+                </div>
 
-                    <div className="col-md-6 mb-3">
-                      <label className="form-label">Designation *</label>
-                      <input className="form-control" name="designation" onChange={handleChange} />
-                    </div>
-                  </div>
+                <div>
+                  <label className={styles.label}>Industry</label>
+                  <input
+                    className={styles.input}
+                    name="industry"
+                    value={formData.industry}
+                    onChange={handleChange}
+                  />
+                  <small style={{ color: "red" }}>{errors.industry}</small>
+                </div>
 
-                  <div className="row">
-                    <div className="col-md-6 mb-3">
-                      <label className="form-label">Industry *</label>
-                      <input className="form-control" name="industry" onChange={handleChange} />
-                    </div>
+                <div>
+                  <label className={styles.label}>Company Size</label>
+                  <select
+                    className={styles.select}
+                    name="companySize"
+                    value={formData.companySize}
+                    onChange={handleChange}
+                  >
+                    <option value="">Select Size</option>
+                    <option>Startup (1-10)</option>
+                    <option>Small (10-50)</option>
+                    <option>Medium (50-200)</option>
+                    <option>Enterprise (500+)</option>
+                  </select>
+                </div>
 
-                    <div className="col-md-6 mb-3">
-                      <label className="form-label">Location *</label>
-                      <input className="form-control" name="location" onChange={handleChange} />
-                    </div>
-                  </div>
+                <div className={styles.fullWidth}>
+                  <label className={styles.label}>Company Description</label>
+                  <textarea
+                    className={styles.textarea}
+                    rows="3"
+                    name="companyDescription"
+                    value={formData.companyDescription}
+                    onChange={handleChange}
+                  />
+                  <small style={{ color: "red" }}>
+                    {errors.companyDescription}
+                  </small>
+                </div>
+              </div>
+            </>
+          )}
 
-                  <div className="mb-3">
-                    <label className="form-label">Company Size</label>
-                    <select className="form-select" name="companySize" onChange={handleChange}>
-                      <option value="">Select size</option>
-                      <option>Startup</option>
-                      <option>1-50</option>
-                      <option>50-200</option>
-                      <option>500+</option>
-                    </select>
-                  </div>
+          {/* STEP 3 */}
+          {step === 3 && (
+            <>
+              <div className={styles.header}>
+                <h2 className={styles.title}>Professional Details</h2>
+              </div>
 
-                  <div className="d-flex justify-content-between">
-                    <button className="btn btn-outline-secondary" onClick={prev}>
-                      ← Back
-                    </button>
-                    <button className="btn btn-primary" onClick={next}>
-                      Next →
-                    </button>
-                  </div>
-                </>
-              )}
+              <div className={styles.grid}>
+                <div>
+                  <label className={styles.label}>Experience (Years)</label>
+                  <input
+                    type="number"
+                    className={styles.input}
+                    name="yearsOfExperience"
+                    value={formData.yearsOfExperience}
+                    onChange={handleChange}
+                  />
+                  <small style={{ color: "red" }}>
+                    {errors.yearsOfExperience}
+                  </small>
+                </div>
 
-              {/* STEP 3 */}
-              {step === 3 && (
-                <>
-                  <h5 className="mb-3">Online Presence</h5>
+                <div className={styles.fullWidth}>
+                  <label className={styles.label}>Hiring Skills</label>
+                  <input
+                    className={styles.input}
+                    name="hiringSkills"
+                    value={formData.hiringSkills}
+                    onChange={handleChange}
+                  />
+                </div>
 
-                  <div className="mb-3">
-                    <label className="form-label">LinkedIn Profile</label>
-                    <input className="form-control" name="linkedInProfile" onChange={handleChange} />
-                  </div>
+                <div className={styles.fullWidth}>
+                  <label className={styles.label}>About You</label>
+                  <textarea
+                    className={styles.textarea}
+                    rows="4"
+                    name="about"
+                    value={formData.about}
+                    onChange={handleChange}
+                  />
+                  <small style={{ color: "red" }}>{errors.about}</small>
+                </div>
+              </div>
+            </>
+          )}
 
-                  <div className="mb-3">
-                    <label className="form-label">Company Website</label>
-                    <input className="form-control" name="companyWebsite" onChange={handleChange} />
-                  </div>
+          {/* STEP 4 */}
+          {step === 4 && (
+            <>
+              <div className={styles.header}>
+                <h2 className={styles.title}>Final Touches</h2>
+              </div>
 
-                  <div className="mb-3">
-                    <label className="form-label">Company Logo URL</label>
-                    <input className="form-control" name="companyLogoUrl" onChange={handleChange} />
-                  </div>
+              <div className={styles.grid}>
+                <div className={styles.fullWidth}>
+                  <label className={styles.label}>LinkedIn Profile</label>
+                  <input
+                    className={styles.input}
+                    name="linkedInProfile"
+                    value={formData.linkedInProfile}
+                    onChange={handleChange}
+                  />
+                  <small style={{ color: "red" }}>
+                    {errors.linkedInProfile}
+                  </small>
+                </div>
+              </div>
+            </>
+          )}
 
-                  <div className="d-flex justify-content-between">
-                    <button className="btn btn-outline-secondary" onClick={prev}>
-                      ← Back
-                    </button>
-                    <button className="btn btn-primary" onClick={next}>
-                      Next →
-                    </button>
-                  </div>
-                </>
-              )}
+          {/* FOOTER */}
+          <div className={styles.footer}>
+            {step > 1 ? (
+              <button className={styles.btnBack} onClick={prev}>
+                <FaArrowLeft /> Back
+              </button>
+            ) : (
+              <div />
+            )}
 
-              {/* STEP 4 */}
-              {step === 4 && (
-                <>
-                  <h5 className="mb-3">Recruiter Details</h5>
-
-                  <div className="mb-3">
-                    <label className="form-label">Years of Experience</label>
-                    <input
-                      type="number"
-                      className="form-control"
-                      name="yearsOfExperience"
-                      onChange={handleChange}
-                    />
-                  </div>
-
-                  <div className="mb-3">
-                    <label className="form-label">About You</label>
-                    <textarea className="form-control" rows="3" name="about" onChange={handleChange} />
-                  </div>
-
-                  <div className="mb-3">
-                    <label className="form-label">Company Description</label>
-                    <textarea
-                      className="form-control"
-                      rows="3"
-                      name="companyDescription"
-                      onChange={handleChange}
-                    />
-                  </div>
-
-                  <div className="mb-3">
-                    <label className="form-label">Hiring Skills</label>
-                    <input
-                      className="form-control"
-                      placeholder="Java, React, HR"
-                      onChange={handleSkills}
-                    />
-                  </div>
-
-                  <div className="d-flex justify-content-between">
-                    <button className="btn btn-outline-secondary" onClick={prev}>
-                      ← Back
-                    </button>
-                    <button className="btn btn-success" onClick={submitProfile}>
-                      Submit Profile
-                    </button>
-                  </div>
-                </>
-              )}
-
-            </div>
+            {step < 4 ? (
+              <button className={styles.btnNext} onClick={next}>
+                Next <FaArrowRight />
+              </button>
+            ) : (
+              <button
+                className={styles.btnNext}
+                onClick={submitProfile}
+                disabled={loading}
+              >
+                {loading ? "Creating..." : "Complete Profile"}
+              </button>
+            )}
           </div>
         </div>
       </div>
-    </main>
+    </div>
   );
 }
 

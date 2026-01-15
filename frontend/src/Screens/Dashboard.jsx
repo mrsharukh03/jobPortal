@@ -1,12 +1,14 @@
-import styles from "../css/Profile.module.css"
+import Footer from "../components/Footer";
+import Navbar from "../components/Navbar";
+import RecruiterDashboard from "../components/RecruiterDashboard";
 
 export default function Dashboard() {
 
   return (
     <div>
-      <main className={styles.Dashboard}>
-
-      </main>
+      <RecruiterDashboard/>
     </div>
   );
 }
+
+

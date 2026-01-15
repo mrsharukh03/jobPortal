@@ -1,0 +1,192 @@
+.container {
+  min-height: 100vh;
+  background-color: #f3f6f8;
+  padding: 40px 0;
+  font-family: 'Inter', sans-serif;
+}
+
+.wizardCard {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  display: flex;
+  min-height: 600px;
+}
+
+/* Sidebar Stepper */
+.sidebar {
+  width: 280px;
+  background: #0f172a;
+  padding: 30px 20px;
+  color: white;
+  display: flex;
+  flex-direction: column;
+}
+
+.stepItem {
+  display: flex;
+  align-items: center;
+  margin-bottom: 25px;
+  opacity: 0.6;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+
+.stepItem.active {
+  opacity: 1;
+  font-weight: 600;
+}
+
+.stepItem.completed .stepNumber {
+  background: #22c55e;
+  border-color: #22c55e;
+  color: white;
+}
+
+.stepNumber {
+  width: 32px;
+  height: 32px;
+  border: 2px solid #64748b;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 15px;
+  font-size: 0.9rem;
+  transition: all 0.3s;
+}
+
+.stepItem.active .stepNumber {
+  border-color: #3b82f6;
+  background: #3b82f6;
+  color: white;
+}
+
+/* Main Content Area */
+.contentArea {
+  flex: 1;
+  padding: 40px;
+  overflow-y: auto;
+}
+
+.sectionTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 5px;
+}
+
+.sectionSubtitle {
+  color: #64748b;
+  margin-bottom: 30px;
+  font-size: 0.95rem;
+}
+
+/* Forms */
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.fullWidth {
+  grid-column: span 2;
+}
+
+.label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 8px;
+}
+
+.input, .select, .textarea {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: border 0.3s;
+  background: #f8fafc;
+}
+
+.input:focus, .select:focus, .textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background: white;
+}
+
+/* Items List (For Added Education/Exp) */
+.addedItem {
+  background: #f1f5f9;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  border-left: 4px solid #3b82f6;
+}
+
+/* Actions */
+.actionButtons {
+  margin-top: 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.btnPrimary {
+  background: #3b82f6;
+  color: white;
+  padding: 12px 30px;
+  border-radius: 8px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btnPrimary:hover {
+  background: #2563eb;
+}
+
+.btnSecondary {
+  background: white;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  padding: 12px 25px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.skipLink {
+  color: #64748b;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .wizardCard {
+    flex-direction: column;
+  }
+  .sidebar {
+    width: 100%;
+    flex-direction: row;
+    overflow-x: auto;
+    padding: 15px;
+  }
+  .stepItem {
+    margin-right: 20px;
+    margin-bottom: 0;
+    min-width: max-content;
+  }
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+  .fullWidth {
+    grid-column: span 1;
+  }
+}

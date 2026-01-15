@@ -1,206 +1,158 @@
-// Auth.jsx
 import { useState } from 'react';
-import styles from '../css/Auth.module.css';
-import { FaUser, FaEnvelope, FaLock, FaGoogle, FaGithub, FaMicrosoft } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
+import { FaUser, FaEnvelope, FaLock, FaGoogle, FaGithub } from 'react-icons/fa';
 import axiosInstance from '../Utilitys/axiosInstance';
+import styles from '../css/Auth.module.css';
 
 function Auth() {
   const navigate = useNavigate();
-
   const [isLogin, setIsLogin] = useState(true);
-  const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    password: '',
-  });
-
+  const [formData, setFormData] = useState({ fullName: '', email: '', password: '' });
   const [errors, setErrors] = useState({});
   const [serverError, setServerError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const validate = () => {
     const newErrors = {};
-
-    if (!isLogin && !formData.fullName.trim()) {
-      newErrors.fullName = 'Full Name is required';
-    }
-
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
-    }
-
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
-    }
-
+    if (!isLogin && !formData.fullName.trim()) newErrors.fullName = 'Full Name is required';
+    if (!formData.email.trim()) newErrors.email = 'Email is required';
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Invalid email address';
+    if (!formData.password) newErrors.password = 'Password is required';
+    else if (formData.password.length < 6) newErrors.password = 'Min 6 chars required';
+    
     setErrors(newErrors);
-
     return Object.keys(newErrors).length === 0;
   };
 
   const handleChange = (e) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    // Clear errors on type
+    if (errors[e.target.name]) setErrors(prev => ({ ...prev, [e.target.name]: '' }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setServerError('');
-
     if (!validate()) return;
 
     setLoading(true);
-
     try {
-      if (isLogin) {
-        // Login API
-        const response = await axiosInstance.post('/auth/login', {
-          email: formData.email,
-          password: formData.password,
-        }, {
-          withCredentials: true,
-        });
+      const endpoint = isLogin ? '/auth/login' : '/auth/signup';
+      const payload = isLogin 
+        ? { email: formData.email, password: formData.password }
+        : formData;
 
-        if (response.status === 200) {
+      const response = await axiosInstance.post(endpoint, payload, { withCredentials: true });
+
+      if (response.status === 200 || response.status === 201) {
+        if (isLogin) {
           navigate('/profile');
-        }
-      } else {
-        // Signup API
-        const response = await axiosInstance.post('/auth/signup', {
-          fullName: formData.fullName,
-          email: formData.email,
-          password: formData.password,
-        });
-
-        if (response.status === 200 || response.status === 201) {
+        } else {
           alert('Signup successful! Please login.');
           setIsLogin(true);
         }
       }
     } catch (error) {
       console.error(error);
-      setServerError(error?.response?.data?.message || 'Something went wrong.');
+      setServerError(error?.response?.data?.message || 'Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
+  const toggleMode = () => {
+    setIsLogin(!isLogin);
+    setErrors({});
+    setServerError('');
+    setFormData({ fullName: '', email: '', password: '' });
+  };
+
   return (
     <div className={styles.authCard}>
-      <div className={styles.authAside}>
-        <h2>{isLogin ? 'Welcome Back!' : 'Join Us Today!'}</h2>
-        <p>
-          {isLogin
-            ? 'Access thousands of jobs and opportunities tailored to your skills.'
-            : 'Create your account and start your career journey with us.'}
+      <div className={styles.header}>
+        <h2>{isLogin ? 'Welcome Back' : 'Create Account'}</h2>
+        <p className={styles.subtitle}>
+          {isLogin ? 'Enter your details to access your account' : 'Start your journey with us today'}
         </p>
-        <img className={`${styles.authimage}`}
-          src={isLogin
-            ? 'https://img.freepik.com/premium-vector/reset-password-concept-illustration_86047-1124.jpg?semt=ais_hybrid&w=740&q=80'
-            : 'https://img.freepik.com/premium-vector/online-registration-illustration-design-concept-websites-landing-pages-other_108061-938.jpg?w=2000'}
-          alt="Auth Illustration"
-          style={{ maxWidth: '100%', height: 'auto' }}
-        />
       </div>
 
-      <div className={styles.authForm }>
-        <h3 className='text-black'>{isLogin ? 'Log In to Your Account' : 'Sign Up for Free'}</h3>
-
-        <form onSubmit={handleSubmit} noValidate>
-          {!isLogin && (
-            <div>
-              <div className={styles.inputBox}>
-                <FaUser className={styles.icon} />
-                <input
-                  type="text"
-                  name="fullName"
-                  placeholder="Full Name"
-                  value={formData.fullName}
-                  onChange={handleChange}
-                  required
-                  aria-invalid={errors.fullName ? "true" : "false"}
-                />
-              </div>
-              {errors.fullName && <small className={styles.error}>{errors.fullName}</small>}
-            </div>
-          )}
-
-          <div>
-            <div className={styles.inputBox}>
-              <FaEnvelope className={styles.icon} />
+      <form onSubmit={handleSubmit} noValidate className={styles.form}>
+        {!isLogin && (
+          <div className={styles.inputGroup}>
+            <div className={`${styles.inputWrapper} ${errors.fullName ? styles.errorBorder : ''}`}>
+              <FaUser className={styles.icon} />
               <input
-                type="email"
-                name="email"
-                placeholder="Email"
-                value={formData.email}
+                type="text"
+                name="fullName"
+                placeholder="Full Name"
+                value={formData.fullName}
                 onChange={handleChange}
-                required
-                aria-invalid={errors.email ? "true" : "false"}
               />
             </div>
-            {errors.email && <small className={styles.error}>{errors.email}</small>}
+            {errors.fullName && <span className={styles.errorMsg}>{errors.fullName}</span>}
           </div>
+        )}
 
-          <div>
-            <div className={styles.inputBox}>
-              <FaLock className={styles.icon} />
-              <input
-                type="password"
-                name="password"
-                placeholder="Password"
-                value={formData.password}
-                onChange={handleChange}
-                required
-                aria-invalid={errors.password ? "true" : "false"}
-              />
-            </div>
-            {errors.password && <small className={styles.error}>{errors.password}</small>}
+        <div className={styles.inputGroup}>
+          <div className={`${styles.inputWrapper} ${errors.email ? styles.errorBorder : ''}`}>
+            <FaEnvelope className={styles.icon} />
+            <input
+              type="email"
+              name="email"
+              placeholder="Email Address"
+              value={formData.email}
+              onChange={handleChange}
+            />
           </div>
-          {serverError && <p className='text-danger'>{serverError}</p>}
-
-          {isLogin && (
-            <div className={styles.forgotPassword}>
-              <a href="#" onClick={(e) => { e.preventDefault(); alert('Forgot Password clicked!'); }}>
-                Forgot Password?
-              </a>
-            </div>
-          )}
-
-          <button className="btn btn-primary w-100 rounded-pill mt-2" type="submit" disabled={loading}>
-            {loading ? 'Please wait...' : isLogin ? 'Login' : 'Sign Up'}
-          </button>
-        </form>
-
-        <div className="text-center my-3 text-muted">or continue with</div>
-
-        <div className={styles.socialButtons}>
-          <button className={`${styles.oauthBtn} ${styles.google}`}>
-            <FaGoogle /> Google
-          </button>
-          <button className={`${styles.oauthBtn} ${styles.github}`}>
-            <FaGithub /> GitHub
-          </button>
-          <button className={`${styles.oauthBtn} ${styles.microsoft}`}>
-            <FaMicrosoft /> Microsoft
-          </button>
+          {errors.email && <span className={styles.errorMsg}>{errors.email}</span>}
         </div>
 
-        <p className="text-center mt-4 text-muted">
-          {isLogin ? "Don't have an account?" : 'Already have an account?'}{' '}
-          <span className={styles.toggle} onClick={() => {
-            setIsLogin(!isLogin);
-            setErrors({});
-            setFormData({ fullName: '', email: '', password: '' });
-            setServerError('');
-          }}>
-            {isLogin ? 'Sign Up' : 'Login'}
-          </span>
-        </p>
+        <div className={styles.inputGroup}>
+          <div className={`${styles.inputWrapper} ${errors.password ? styles.errorBorder : ''}`}>
+            <FaLock className={styles.icon} />
+            <input
+              type="password"
+              name="password"
+              placeholder="Password"
+              value={formData.password}
+              onChange={handleChange}
+            />
+          </div>
+          {errors.password && <span className={styles.errorMsg}>{errors.password}</span>}
+        </div>
+
+        {serverError && <div className={styles.serverError}>{serverError}</div>}
+
+        {isLogin && (
+          <div className={styles.forgotPass}>
+            <a href="#">Forgot Password?</a>
+          </div>
+        )}
+
+        <button type="submit" className={styles.submitBtn} disabled={loading}>
+          {loading ? <span className={styles.loader}></span> : (isLogin ? 'Sign In' : 'Sign Up')}
+        </button>
+      </form>
+
+      <div className={styles.divider}>
+        <span>Or continue with</span>
       </div>
+
+      <div className={styles.socialButtons}>
+        <button className={styles.socialBtn}>
+          <FaGoogle color="#DB4437" /> <span>Google</span>
+        </button>
+        <button className={styles.socialBtn}>
+          <FaGithub color="#333" /> <span>GitHub</span>
+        </button>
+      </div>
+
+      <p className={styles.footerText}>
+        {isLogin ? "Don't have an account?" : 'Already have an account?'}
+        <span onClick={toggleMode} className={styles.link}>
+          {isLogin ? 'Sign Up' : 'Log In'}
+        </span>
+      </p>
     </div>
   );
 }

@@ -5,7 +5,6 @@ import Footer from "../components/Footer";
 import UserRoleSeekerOrRecruiter from "../components/UserRoleSeekerOrRecruiter";
 import FillJobSeekerProfile from "../components/FillJobSeekerProfile";
 import FillJobRecruiterProfile from "../components/FillJobRecruiterProfile";
-import styles from "../css/Profile.module.css";
 import RecruiterProfileView from "../components/RecruiterProfileView";
 
 export default function Profile() {
@@ -45,7 +44,7 @@ export default function Profile() {
   return (
     <div>
       <Navbar />
-      <main className={`${styles.main}`}>
+      <main>
         {showProfileForm ? (
           <>
             {/* Role selection component (only for general user) */}
@@ -61,7 +60,7 @@ export default function Profile() {
           <div className="text-center mt-5">
             {roleData?.role === "RECRUITER" && <RecruiterProfileView />}
             {roleData?.role === "SEEKER" && <h3>Hello Seeker! Your profile is complete.</h3>}
-            {roleData?.role === "USER" && <h3>Welcome! Please choose your role.</h3>}
+            {roleData?.role === "USER" && <UserRoleSeekerOrRecruiter />}
           </div>
         )}
       </main>

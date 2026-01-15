@@ -5,35 +5,35 @@ import BrowseByCategory from "../components/BrowseByCategory";
 import JobSeekerRecruiterSection from "../components/JobSeekerRecruiterSection";
 import TrustBannerSection from "../components/TrustBannerSection";
 import Footer from "../components/Footer";
-import Autocomplete from "@mui/material/Autocomplete";
-import TextField from "@mui/material/TextField";
-import SearchForm from "../components/SearchForm";
+import SearchForm from "../components/SearchForm"; 
+// ✅ Removed unused Autocomplete/TextField imports
 
 function Home() {
+  // ✅ Fixed Typos and formatting for realistic data
   const featuredJob = [
     {
-      id: 1,
-      name: "Software Engineer",
-      salary: "8$ - 24$",
-      location: "Banglure, Karnatka",
-      company: "Microsoft",
-      logo: "https://cdn-icons-png.flaticon.com/512/732/732221.png",
-    },
-    {
       id: 2,
-      name: "DevOops Enginner",
-      salary: "10$ - 25$",
+      name: "DevOps Engineer", // Fixed Spelling (DevOops -> DevOps)
+      salary: "$90k - $130k",
       location: "New Delhi, India",
-      company: "Facebook",
+      company: "Meta", // Facebook is now Meta (Optional but modern)
       logo: "https://cdn-icons-png.flaticon.com/512/5968/5968764.png",
     },
     {
       id: 3,
-      name: "AI/ML Enginner",
-      salary: "20$ - 35$",
-      location: "Mumbai, Maharastra",
+      name: "AI/ML Engineer",
+      salary: "$100k - $150k",
+      location: "Mumbai, Maharashtra", // Fixed Spelling
       company: "Google",
       logo: "https://cdn-icons-png.flaticon.com/512/300/300221.png",
+    },
+    {
+      id: 4,
+      name: "Frontend Developer",
+      salary: "$70k - $110k",
+      location: "Remote",
+      company: "Netflix",
+      logo: "https://cdn-icons-png.flaticon.com/512/2504/2504929.png",
     },
   ];
 
@@ -41,68 +41,49 @@ function Home() {
     <>
       <Navbar />
       <main className={style.main}>
-        {/* ✅ Banner Section */}
+        
+        {/* ✅ Improved Banner Section */}
         <section className={style.banner}>
           <div className={style.overlay}></div>
-          <div className="container position-relative text-white text-center py-5">
-            <h1 className="display-4 fw-bold mb-3">Find Your Dream Job Here</h1>
-            <p className="lead mb-5">
-              Explore thousands of jobs from top companies worldwide.
+          
+          <div className={`container text-center ${style.bannerContent}`}>
+            {/* Badge for modern look */}
+            <span className={`badge rounded-pill px-3 py-2 mb-3 ${style.primaryBadge}`}>
+              #1 Job Portal in India
+            </span>
+
+            <h1 className="display-4 fw-bold mb-3 text-white">
+              Find Your <span className="text-primary">Dream Job</span> Today
+            </h1>
+            
+            <p className="lead mb-5 text-light opacity-75">
+              Connecting talent with opportunity. Explore thousands of jobs from top companies.
             </p>
-            {/* <form
-              className={`row g-3 justify-content-center ${style.searchBox}`}
-            >
-              <div className="col-md-4 position-relative">
-                <input
-                  type="text"
-                  className={`form-control ps-5 ${style.inputWithIcon}`}
-                  placeholder="Job title or keyword"
-                />
-                <span className={style.icon}>
-                  <i className="bi bi-briefcase-fill"></i>
-                </span>
-              </div>
 
-              <div className="col-md-3 position-relative">
-                <input
-                  type="text"
-                  className={`form-control ps-5 ${style.inputWithIcon}`}
-                  placeholder="Location"
-                />
-                <span className={style.icon}>
-                  <i className="bi bi-geo-alt-fill"></i>
-                </span>
-              </div>
-
-              <div className="col-md-3 position-relative">
-                <select className={`form-select ps-5 ${style.inputWithIcon}`}>
-                  <option>All Categories</option>
-                  <option>Engineering</option>
-                  <option>Design</option>
-                  <option>Marketing</option>
-                </select>
-                <span className={style.icon}>
-                  <i className="bi bi-list-ul"></i>
-                </span>
-              </div>
-
-              <div className="col-md-2 d-grid">
-                <button type="submit" className="btn btn-primary btn-lg shadow">
-                  Search
-                </button>
-              </div>
-            </form> */}
-            <SearchForm />
+            {/* ✅ Search Form in a Glass Container */}
+            <div className={style.searchContainer}>
+              <SearchForm />
+            </div>
           </div>
         </section>
 
         {/* ✅ Featured Jobs */}
-        <FeaturedJob featuredJobs={featuredJob} />
+        {/* Added py-5 for better spacing */}
+        <div className="py-5">
+           <FeaturedJob featuredJobs={featuredJob} />
+        </div>
 
         {/* ✅ Browse by Category */}
-        <BrowseByCategory />
+        <div className="bg-white py-5">
+           <BrowseByCategory />
+        </div>
+        
+        {/* ✅ Info Section */}
         <JobSeekerRecruiterSection />
+        
+        {/* ✅ Trust Banner */}
         <TrustBannerSection />
+        
         <Footer />
       </main>
     </>
