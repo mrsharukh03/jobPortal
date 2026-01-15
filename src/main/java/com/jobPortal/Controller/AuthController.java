@@ -25,18 +25,10 @@ public class AuthController {
         this.userServices = userServices;
     }
 
-    @GetMapping("/health")
-    public ResponseEntity<String> health() {
-        return ResponseEntity.ok("Server is running");
-    }
-
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@Valid @RequestBody SignupDTO signupRequest) {
         return userServices.signup(signupRequest);
     }
-
-
-
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginDTO loginDTO, HttpServletResponse response) {

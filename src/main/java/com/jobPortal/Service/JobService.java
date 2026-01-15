@@ -6,9 +6,12 @@ import com.jobPortal.Enums.JobStatus;
 import com.jobPortal.Model.JobPost;
 import com.jobPortal.Model.Skill;
 import com.jobPortal.Model.Users.Recruiter;
+import com.jobPortal.Model.Users.User;
 import com.jobPortal.Repositorie.JobRepository;
 import com.jobPortal.Repositorie.RecruiterRepository;
 import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +25,7 @@ import java.util.Optional;
 @Service
 public class JobService {
 
+    private static final Logger log = LoggerFactory.getLogger(JobService.class);
     @Autowired
     private RecruiterRepository recruiterRepository;
 
@@ -98,7 +102,7 @@ public class JobService {
         return ResponseEntity.status(HttpStatus.CREATED).body("Job Posted");
     }
 
-    public ResponseEntity<?> getAllPosts(String email) {
+    public ResponseEntity<?> getJobsByRecruiterUserId(String email) {
         // Fetch recruiter with active user check
         Optional<Recruiter> recruiterOpt = recruiterRepository.findByUser_Email(email);
         if (!recruiterOpt.isPresent()) {
@@ -195,4 +199,90 @@ public class JobService {
     }
 
 
+    public ResponseEntity<?> getRecomendedJobsForUser(String username) { // Pagination will applied
+        try{
+
+            List<JobPost> allPosts = jobPostRepository.findAll();
+            // Algorithms for Popular jobs will written here
+
+            // Map each JobPost to JobRequestDTO
+            List<JobRequestDTO> posts = new ArrayList<>();
+            for (JobPost jobPost : allPosts) {
+                JobRequestDTO dto = modelMapper.map(jobPost, JobRequestDTO.class);
+
+                // Map required skills names
+                if (jobPost.getRequiredSkills() != null) {
+                    List<String> skillNames = new ArrayList<>();
+                    jobPost.getRequiredSkills().forEach(skill -> skillNames.add(skill.getName()));
+                    dto.setRequiredSkills(skillNames);
+                } else {
+                    dto.setRequiredSkills(new ArrayList<>());
+                }
+
+                posts.add(dto);
+            }
+            return new ResponseEntity<>(posts,HttpStatus.OK);
+
+        } catch (Exception e){
+            log.error("Error in popular job method {}",e.getMessage());
+            return new ResponseEntity<>("Something went wrong!!",HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+    }
+
+    public ResponseEntity<?> getPopularJobs() {         // Pagination will applied
+        try{
+            List<JobPost> allPosts = jobPostRepository.findAll();
+            // Algorithms for Popular jobs will written here
+
+            // Map each JobPost to JobRequestDTO
+            List<JobRequestDTO> posts = new ArrayList<>();
+            for (JobPost jobPost : allPosts) {
+                JobRequestDTO dto = modelMapper.map(jobPost, JobRequestDTO.class);
+                // Map required skills names
+                if (jobPost.getRequiredSkills() != null) {
+                    List<String> skillNames = new ArrayList<>();
+                    jobPost.getRequiredSkills().forEach(skill -> skillNames.add(skill.getName()));
+                    dto.setRequiredSkills(skillNames);
+                } else {
+                    dto.setRequiredSkills(new ArrayList<>());
+                }
+
+                posts.add(dto);
+            }
+            return new ResponseEntity<>(posts,HttpStatus.OK);
+
+        } catch (Exception e){
+            log.error("Some Error Ocher in popular job method {}",e.getMessage());
+            return new ResponseEntity<>("Something went wrong!!",HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public ResponseEntity<?> findJobsByCategory(String category) {
+        try{
+            List<JobPost> allPosts = jobPostRepository.findAllByCategory(category);
+
+            if(allPosts.isEmpty()) return new ResponseEntity<>(new ArrayList<>(),HttpStatus.NOT_FOUND);
+            // Map each JobPost to JobRequestDTO
+            List<JobRequestDTO> posts = new ArrayList<>();
+            for (JobPost jobPost : allPosts) {
+                JobRequestDTO dto = modelMapper.map(jobPost, JobRequestDTO.class);
+
+                // Map required skills names
+                if (jobPost.getRequiredSkills() != null) {
+                    List<String> skillNames = new ArrayList<>();
+                    jobPost.getRequiredSkills().forEach(skill -> skillNames.add(skill.getName()));
+                    dto.setRequiredSkills(skillNames);
+                } else {
+                    dto.setRequiredSkills(new ArrayList<>());
+                }
+
+                posts.add(dto);
+            }
+            return new ResponseEntity<>(posts,HttpStatus.OK);
+
+        }catch (Exception e){
+            return new ResponseEntity<>("Something went wrong!!",HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }

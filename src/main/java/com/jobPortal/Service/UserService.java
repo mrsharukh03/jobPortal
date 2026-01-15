@@ -101,10 +101,11 @@ public class UserService {
             throw new RuntimeException("Invalid Password");
         }
 
-        String accessToken = jwtUtils.generateToken(user.getEmail(), user.getRole());
-        String refreshToken = jwtUtils.generateRefreshToken(user.getEmail(), user.getRole());
+        String accessToken = jwtUtils.generateAccessToken( user.getEmail(), user.getId(), user.getRole());
+        String refreshToken = jwtUtils.generateRefreshToken(user.getEmail(), user.getId());
 
         return new AuthResponseDTO(accessToken, refreshToken);
+
     }
 
     public ResponseEntity<?> forgetPassword(String email) {
@@ -145,41 +146,29 @@ public class UserService {
     public boolean validateAccessToken(String token) {
         try {
             String email = jwtUtils.extractEmail(token);
-            return jwtUtils.validateToken(token,email);
+            return jwtUtils.validateAccessToken(token, email);
         } catch (Exception e) {
-            log.warn("Invalid access token: {}", e.getMessage());
             return false;
         }
     }
 
-    public String generateAccessTokenFromRefresh(String refreshToken) throws RuntimeException{
-        try {
-            String email = jwtUtils.extractEmail(refreshToken);
 
-            // Check if refresh token is valid & not expired
-            if (!jwtUtils.validateToken(refreshToken, email)) {
-                throw new RuntimeException("Invalid or expired refresh token");
-            }
+    public String generateAccessTokenFromRefresh(String refreshToken) {
 
-            // Extract roles from refresh token
-            List<String> rolesAsString = jwtUtils.extractRole(refreshToken);
-
-            // Convert String roles to your Role enum list
-            List<Role> roles = rolesAsString.stream()
-                    .map(Role::valueOf)
-                    .collect(Collectors.toList());
-
-            // Generate new access token using email and roles
-            return jwtUtils.generateToken(email, roles);
-
-        } catch (Exception e) {
-            log.error("Failed to generate access token from refresh token: {}", e.getMessage());
-            throw new RuntimeException("Could not generate access token");
+        if (!jwtUtils.validateRefreshToken(refreshToken)) {
+            throw new RuntimeException("Invalid or expired refresh token");
         }
+
+        UUID userId = jwtUtils.extractUserId(refreshToken);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return jwtUtils.generateAccessToken(
+                user.getEmail(),
+                user.getId(),
+                user.getRole()
+        );
     }
-
-
-
 
 
     public ResponseEntity<?> verifyEmail(String token) {
@@ -249,8 +238,8 @@ public class UserService {
                 throw new RuntimeException("User not found");
             }
 
-            String accessToken = jwtUtils.generateToken(user.getEmail(), user.getRole());
-            String refreshToken = jwtUtils.generateRefreshToken(user.getEmail(), user.getRole());
+            String accessToken = jwtUtils.generateAccessToken(user.getEmail(),user.getId(), user.getRole());
+            String refreshToken = jwtUtils.generateRefreshToken(user.getEmail(), user.getId());
 
             return new AuthResponseDTO(accessToken, refreshToken);
         }catch(RuntimeException e){
@@ -283,16 +272,16 @@ public class UserService {
             userRepository.save(newUser);
             log.info("New Google OAuth user created: {}", email);
         }
-        String accessToken = jwtUtils.generateToken(user.getEmail(), user.getRole());
-        String refreshToken = jwtUtils.generateRefreshToken(user.getEmail(), user.getRole());
+        String accessToken = jwtUtils.generateAccessToken(user.getEmail(), user.getId(), user.getRole());
+        String refreshToken = jwtUtils.generateRefreshToken(user.getEmail(),user.getId());
         return new AuthResponseDTO(accessToken, refreshToken);
     }
 
 
     @Transactional
-    public ResponseEntity<?> createUserType(String role, UserDetails userDetails) {
+    public ResponseEntity<?> createUserType(String email,String role) {
         try {
-            User user = userRepository.findByEmail(userDetails.getUsername());
+            User user = userRepository.findByEmail(email);
             if (user == null) return new ResponseEntity<>("User not found",HttpStatus.NOT_FOUND);
 
             if (role.equals(Role.ADMIN.toString()) || role.equals(Role.SUPER_ADMIN.toString())){
@@ -324,9 +313,9 @@ public class UserService {
         return new ResponseEntity<>("Profile created successfully",HttpStatus.CREATED);
     }
 
-    public ResponseEntity<?> getUserRoleAndProfileStatus(String username) {
+    public ResponseEntity<?> getUserRoleAndProfileStatus(String email) {
         try {
-            User user = userRepository.findByEmail(username);
+            User user = userRepository.findByEmail(email);
             if (user == null) return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
             Map<String,String> response = new HashMap<>();
             List<Role> userRoles = user.getRole();

@@ -1,4 +1,5 @@
 package com.jobPortal.Security;
+
 import com.jobPortal.Enums.Role;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -6,6 +7,7 @@ import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -15,87 +17,119 @@ public class JWTUtils {
 
     @Value("${jwt.secret-key}")
     private String secretKey;
+
     @Value("${jwt.token-expiration}")
-    private long tokenExpirationMs;
+    private long accessTokenExpirationMs;
 
     @Value("${jwt.refresh-token-expiration}")
     private long refreshTokenExpirationMs;
 
+    /* =========================
+       🔑 INTERNAL HELPERS
+       ========================= */
 
+    private SecretKey getSigningKey() {
+        return Keys.hmacShaKeyFor(secretKey.getBytes());
+    }
+
+    private Claims extractAllClaims(String token) {
+        try {
+            return Jwts.parser()
+                    .verifyWith(getSigningKey())
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid or expired JWT token");
+        }
+    }
+
+    public <T> T extractClaim(String token, Function<Claims, T> resolver) {
+        return resolver.apply(extractAllClaims(token));
+    }
+
+    /* =========================
+       📤 EXTRACT METHODS
+       ========================= */
 
     public String extractEmail(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
-    public List<String> extractRole(String token){
-        Claims claims = extractAllClaims(token);
-        Object roles = claims.get("role");
+    public UUID extractUserId(String token) {
+        String userId = extractClaim(token, claims -> claims.get("userId", String.class));
+        return UUID.fromString(userId);
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<String> extractRoles(String token) {
+        Object roles = extractAllClaims(token).get("roles");
         if (roles instanceof List<?>) {
-            return ((List<?>) roles).stream()
+            return ((List<?>) roles)
+                    .stream()
                     .map(Object::toString)
                     .collect(Collectors.toList());
         }
         return Collections.emptyList();
     }
 
-
-    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
-        final Claims claims = extractAllClaims(token);
-        return claimsResolver.apply(claims);
-    }
-
-    private Claims extractAllClaims(String token) {
-        try {
-            return Jwts.parser()
-                    .setSigningKey(Keys.hmacShaKeyFor(secretKey.getBytes()))
-                    .build()
-                    .parseClaimsJws(token)
-                    .getBody();
-
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Invalid JWT token", e);
-        }
-    }
-
     public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
     }
 
-    private Boolean isTokenExpired(String token) {
-        Date expiration = extractExpiration(token);
-        return expiration != null && expiration.before(new Date());
+    public boolean isTokenExpired(String token) {
+        return extractExpiration(token).before(new Date());
     }
 
-    public String generateToken(String email, List<Role> role) {
-        Map<String,Object> claims = new HashMap<>();
-        claims.put("role",role);
-        return createToken(email,claims);
-    }
-    public String generateRefreshToken(String email,List<Role> role) {
-        Map<String,Object> claims = new HashMap<>();
-        claims.put("role",role);
-        return createRefreshToken(email,claims);
-    }
+    /* =========================
+       🔐 TOKEN GENERATION
+       ========================= */
 
-    private String createToken(String subject,Map<String,Object> claims) {
-        return Jwts.builder().claims(claims)
-                .subject(subject)
-                .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + tokenExpirationMs))
-                .signWith(Keys.hmacShaKeyFor(secretKey.getBytes()))
+    public String generateAccessToken(String email, UUID userId, List<Role> roles) {
+
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", userId.toString());
+        claims.put("roles",
+                roles.stream()
+                        .map(Enum::name)
+                        .toList()
+        );
+
+        return Jwts.builder()
+                .claims(claims)
+                .subject(email)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + accessTokenExpirationMs))
+                .signWith(getSigningKey())
                 .compact();
     }
-    private String createRefreshToken(String subject,Map<String,Object> claims) {
-        return Jwts.builder().claims(claims)
-                .subject(subject)
-                .issuedAt(new Date(System.currentTimeMillis()))
+
+    public String generateRefreshToken(String email, UUID userId) {
+
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", userId.toString());
+        claims.put("type", "refresh");
+
+        return Jwts.builder()
+                .claims(claims)
+                .subject(email)
+                .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + refreshTokenExpirationMs))
-                .signWith(Keys.hmacShaKeyFor(secretKey.getBytes()))
+                .signWith(getSigningKey())
                 .compact();
     }
 
-    public Boolean validateToken(String token, String email) {
-        final String extractedUsername = extractEmail(token);
-        return (extractedUsername.equals(email) && !isTokenExpired(token));
+    /* =========================
+       ✅ VALIDATION
+       ========================= */
+
+    public boolean validateAccessToken(String token, String email) {
+        return extractEmail(token).equals(email) && !isTokenExpired(token);
+    }
+
+    public boolean validateRefreshToken(String token) {
+        Claims claims = extractAllClaims(token);
+        return "refresh".equals(claims.get("type"))
+                && !isTokenExpired(token);
     }
 }

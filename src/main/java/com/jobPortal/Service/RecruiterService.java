@@ -13,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class RecruiterService {
@@ -73,17 +75,13 @@ public class RecruiterService {
         }
     }
 
-    public ResponseEntity<?> getProfile(String username) {
+    public ResponseEntity<?> getProfile(UUID userId) {
         try {
-            User user = userRepository.findByEmail(username);
-            if (user == null) {
-                return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
-            }
-
-            Recruiter recruiter = recruiterRepository.findByUser(user);
-            if (recruiter == null) {
+            Optional<Recruiter> recruiteropt = recruiterRepository.findById(userId);
+            if (recruiteropt.isEmpty()) {
                 return new ResponseEntity<>("Recruiter profile not found", HttpStatus.NOT_FOUND);
             }
+            Recruiter recruiter = recruiteropt.get();
 
             RecruiterViewDTO dto = new RecruiterViewDTO(
                     recruiter.getId(),

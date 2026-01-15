@@ -17,7 +17,6 @@ import java.util.*;
 public class Recruiter {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @OneToOne

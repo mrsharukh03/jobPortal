@@ -1,6 +1,7 @@
 package com.jobPortal.Controller;
 
 import com.jobPortal.DTO.JobPostDTO;
+import com.jobPortal.Security.JwtUserPrincipal;
 import com.jobPortal.Service.JobService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -24,20 +25,17 @@ public class JobController {
 
     @PostMapping("/post")
     @PreAuthorize("hasRole('RECRUITER')")
-    public ResponseEntity<?> postJob(@Valid JobPostDTO jobPostDTO,@AuthenticationPrincipal UserDetails userDetails){
-        return jobService.postJob(userDetails.getUsername(),jobPostDTO);
+    public ResponseEntity<?> postJob(
+            @Valid @RequestBody JobPostDTO jobPostDTO,
+            @AuthenticationPrincipal JwtUserPrincipal principal
+    ) {
+        return jobService.postJob(principal.getEmail(), jobPostDTO);
     }
-
-    @GetMapping("/posts")
-    public ResponseEntity<?> getPosts(@AuthenticationPrincipal UserDetails userDetails){
-        return jobService.getAllPosts(userDetails.getUsername());
-    }
-
 
     @DeleteMapping("/post")
     @PreAuthorize("hasRole('RECRUITER')")
-    public ResponseEntity<?> deletePost(@RequestParam Long postId, @AuthenticationPrincipal UserDetails userDetails){
-        return jobService.deletePost(userDetails.getUsername(),postId);
+    public ResponseEntity<?> deletePost(@RequestParam Long postId, @AuthenticationPrincipal JwtUserPrincipal principal){
+        return jobService.deletePost(principal.getEmail(), postId);
     }
 
     
