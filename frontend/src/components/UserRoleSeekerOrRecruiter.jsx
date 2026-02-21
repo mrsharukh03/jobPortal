@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axiosInstance from "../Utilitys/axiosInstance";
+import axiosInstance from "../contexts/axiosInstance";
 import { FaBuilding, FaUserTie, FaCheckCircle, FaRegCircle, FaExclamationTriangle } from "react-icons/fa";
 
 function UserRoleSeekerOrRecruiter() {

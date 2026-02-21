@@ -1,24 +1,21 @@
-import { useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
-import Auth from '../components/Auth';
-import Footer from '../components/Footer';
-import Navbar from '../components/Navbar';
-import { checkLoginStatus } from '../Utilitys/help';
-import styles from '../css/Auth.module.css';
+import { useEffect } from "react";
+import { Navigate, useLocation } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import Auth from "../components/Auth";
+import Footer from "../components/Footer";
+import Navbar from "../components/Navbar";
+import styles from "../css/Auth.module.css";
 
 function Login() {
-  const [isAuthenticated, setIsAuthenticated] = useState(null);
+  const { user, loading } = useAuth();
+  const location = useLocation();
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const result = await checkLoginStatus();
-      setIsAuthenticated(result.authenticated);
-    };
-    checkAuth();
-  }, []);
+  // jahan se aaya tha (ya home)
+  const redirectTo = location.state?.from || "/";
 
-  if (isAuthenticated) {
-    return <Navigate to="/profile" replace />;
+  // jab already logged in ho
+  if (!loading && user) {
+    return <Navigate to={redirectTo} replace />;
   }
 
   return (

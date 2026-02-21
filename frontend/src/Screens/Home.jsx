@@ -9,21 +9,20 @@ import SearchForm from "../components/SearchForm";
 // ✅ Removed unused Autocomplete/TextField imports
 
 function Home() {
-  // ✅ Fixed Typos and formatting for realistic data
   const featuredJob = [
     {
       id: 2,
-      name: "DevOps Engineer", // Fixed Spelling (DevOops -> DevOps)
+      name: "DevOps Engineer",
       salary: "$90k - $130k",
       location: "New Delhi, India",
-      company: "Meta", // Facebook is now Meta (Optional but modern)
+      company: "Meta",
       logo: "https://cdn-icons-png.flaticon.com/512/5968/5968764.png",
     },
     {
       id: 3,
       name: "AI/ML Engineer",
       salary: "$100k - $150k",
-      location: "Mumbai, Maharashtra", // Fixed Spelling
+      location: "Mumbai, Maharashtra",
       company: "Google",
       logo: "https://cdn-icons-png.flaticon.com/512/300/300221.png",
     },

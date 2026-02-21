@@ -4,7 +4,7 @@ import styles from '../css/RecruiterDashboard.module.css';
 import PostJob from '../Screens/PostJob.jsx';
 import Navbar from './Navbar.jsx';
 import Footer from './Footer.jsx';
-import axiosInstance from "../Utilitys/axiosInstance"; // Ensure this path is correct
+import axiosInstance from "../contexts/axiosInstance.js";
 
 // --- Icons ---
 import { 

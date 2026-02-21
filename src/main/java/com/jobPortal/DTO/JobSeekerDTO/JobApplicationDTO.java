@@ -1,4 +1,4 @@
 package com.jobPortal.DTO.JobSeekerDTO;
 
-public class PersonalDetailDTO {
+public class JobApplicationDTO {
 }

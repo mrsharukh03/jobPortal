@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axiosInstance from "../Utilitys/axiosInstance";
+import axiosInstance from "../contexts/axiosInstance";
 import {
   FaLinkedin, FaTwitter, FaGlobe, FaCheckCircle, FaCamera, 
   FaBriefcase, FaUsers, FaChartLine, FaCrown, FaBuilding, FaUserPlus, FaMapMarkerAlt, FaPen

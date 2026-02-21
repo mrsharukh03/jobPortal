@@ -1,44 +1,39 @@
-import "bootstrap/dist/css/bootstrap.min.css";
-import "bootstrap/dist/js/bootstrap.bundle.min.js";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthContext";
 import Home from "./Screens/Home";
 import Login from "./Screens/Login";
-import NotFound from "./Screens/NotFound";
-import VerifyEmail from "./Screens/VerifyEmail";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import Dashboard from "./Screens/Dashboard";
-import ProtectedRoute from "./Utilitys/ProtectedRoute";
-import Logout from "./Screens/Logout";
 import Profile from "./Screens/Profile";
-import "tailwindcss";
+import Dashboard from "./Screens/Dashboard";
+import NotFound from "./Screens/NotFound";
+import ProtectedRoute from "./contexts/ProtectedRoute";
+
+import "bootstrap/dist/css/bootstrap.min.css";
+import "bootstrap/dist/js/bootstrap.bundle.min.js";
+import VerifyEmail from "./Screens/VerifyEmail";
+import ForgetPassword from "./Screens/ForgetPassword";
+
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/logout" element={<Logout />} />
-        <Route path="/verify-email/:token" element={<VerifyEmail />} />
-        <Route path="*" element={<NotFound />} />
+    <AuthProvider>
+      <Router>
+        <Routes>
+          {/* PUBLIC ROUTES */}
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/forgot-password" element={<ForgetPassword />} />
 
-        {/* Protected Routes */}
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <Profile />
-            </ProtectedRoute>
-          }
-        />
-      </Routes>
-    </Router>
+          {/* PROTECTED ROUTES */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+          </Route>
+
+          {/* 404 */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 }
 

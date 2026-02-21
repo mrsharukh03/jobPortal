@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import axiosInstance from "../Utilitys/axiosInstance";
+import axiosInstance from "../contexts/axiosInstance";
 
 export default function VerifyEmail() {
     const { token } = useParams();
@@ -24,13 +24,11 @@ export default function VerifyEmail() {
                 "/auth/email-verify",
                 { token }
             );
-
             setMessage(response.data.message);
             setStatus("success");
         } catch (error) {
             setMessage(
-                error.response?.data?.message ||
-                "Email verification failed."
+                error.response?.data?.message || "Email verification failed."
             );
             setStatus("error");
         } finally {

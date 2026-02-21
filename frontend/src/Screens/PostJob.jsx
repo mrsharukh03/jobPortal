@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axiosInstance from "../Utilitys/axiosInstance";
+import axiosInstance from "../contexts/axiosInstance";
 import styles from "../css/PostJob.module.css";
 import { 
   FaBriefcase, FaMapMarkerAlt, FaMoneyBillWave, FaBuilding, 

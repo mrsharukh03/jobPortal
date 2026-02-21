@@ -1,85 +1,121 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { FaUser, FaEnvelope, FaLock, FaGoogle, FaGithub } from 'react-icons/fa';
-import axiosInstance from '../Utilitys/axiosInstance';
-import styles from '../css/Auth.module.css';
+// Auth.jsx
+import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { FaUser, FaEnvelope, FaLock, FaGoogle, FaGithub } from "react-icons/fa";
+import { useAuth } from "../contexts/AuthContext";
+import styles from "../css/Auth.module.css";
 
 function Auth() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { login, signup } = useAuth();
+
+  const redirectTo = location.state?.from || "/";
+
   const [isLogin, setIsLogin] = useState(true);
-  const [formData, setFormData] = useState({ fullName: '', email: '', password: '' });
+  const [formData, setFormData] = useState({
+    fullName: "",
+    email: "",
+    password: "",
+  });
   const [errors, setErrors] = useState({});
-  const [serverError, setServerError] = useState('');
+  const [serverError, setServerError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // ---------------- VALIDATION ----------------
   const validate = () => {
     const newErrors = {};
-    if (!isLogin && !formData.fullName.trim()) newErrors.fullName = 'Full Name is required';
-    if (!formData.email.trim()) newErrors.email = 'Email is required';
-    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Invalid email address';
-    if (!formData.password) newErrors.password = 'Password is required';
-    else if (formData.password.length < 6) newErrors.password = 'Min 6 chars required';
-    
+
+    if (!isLogin && !formData.fullName.trim()) {
+      newErrors.fullName = "Full Name is required";
+    }
+
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = "Invalid email address";
+    }
+
+    if (!formData.password) {
+      newErrors.password = "Password is required";
+    } else if (formData.password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
+  // ---------------- INPUT CHANGE ----------------
   const handleChange = (e) => {
-    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
-    // Clear errors on type
-    if (errors[e.target.name]) setErrors(prev => ({ ...prev, [e.target.name]: '' }));
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+
+    if (errors[e.target.name]) {
+      setErrors((prev) => ({ ...prev, [e.target.name]: "" }));
+    }
+    if (serverError) setServerError("");
   };
 
+  // ---------------- SUBMIT ----------------
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setServerError('');
     if (!validate()) return;
 
     setLoading(true);
+    setServerError("");
+
     try {
-      const endpoint = isLogin ? '/auth/login' : '/auth/signup';
-      const payload = isLogin 
-        ? { email: formData.email, password: formData.password }
-        : formData;
-
-      const response = await axiosInstance.post(endpoint, payload, { withCredentials: true });
-
-      if (response.status === 200 || response.status === 201) {
-        if (isLogin) {
-          navigate('/profile');
-        } else {
-          alert('Signup successful! Please login.');
-          setIsLogin(true);
-        }
+      if (isLogin) {
+        // ✅ LOGIN (cookie based)
+        await login(formData.email, formData.password);
+        navigate(redirectTo, { replace: true });
+      } else {
+        // ✅ SIGNUP
+        await signup(formData.fullName, formData.email, formData.password);
+        alert("Signup successful! Please login.");
+        setIsLogin(true);
+        setFormData({ fullName: "", email: "", password: "" });
       }
-    } catch (error) {
-      console.error(error);
-      setServerError(error?.response?.data?.message || 'Something went wrong. Please try again.');
+    } catch (err) {
+      setServerError(
+        err?.response?.data?.message || "Something went wrong. Try again."
+      );
     } finally {
       setLoading(false);
     }
   };
 
+  // ---------------- TOGGLE ----------------
   const toggleMode = () => {
     setIsLogin(!isLogin);
     setErrors({});
-    setServerError('');
-    setFormData({ fullName: '', email: '', password: '' });
+    setServerError("");
+    setFormData({ fullName: "", email: "", password: "" });
   };
 
   return (
     <div className={styles.authCard}>
       <div className={styles.header}>
-        <h2>{isLogin ? 'Welcome Back' : 'Create Account'}</h2>
+        <h2>{isLogin ? "Welcome Back" : "Create Account"}</h2>
         <p className={styles.subtitle}>
-          {isLogin ? 'Enter your details to access your account' : 'Start your journey with us today'}
+          {isLogin
+            ? "Enter your details to access your account"
+            : "Start your journey with us today"}
         </p>
       </div>
 
       <form onSubmit={handleSubmit} noValidate className={styles.form}>
+        {/* FULL NAME */}
         {!isLogin && (
           <div className={styles.inputGroup}>
-            <div className={`${styles.inputWrapper} ${errors.fullName ? styles.errorBorder : ''}`}>
+            <div
+              className={`${styles.inputWrapper} ${
+                errors.fullName ? styles.errorBorder : ""
+              }`}
+            >
               <FaUser className={styles.icon} />
               <input
                 type="text"
@@ -89,12 +125,19 @@ function Auth() {
                 onChange={handleChange}
               />
             </div>
-            {errors.fullName && <span className={styles.errorMsg}>{errors.fullName}</span>}
+            {errors.fullName && (
+              <span className={styles.errorMsg}>{errors.fullName}</span>
+            )}
           </div>
         )}
 
+        {/* EMAIL */}
         <div className={styles.inputGroup}>
-          <div className={`${styles.inputWrapper} ${errors.email ? styles.errorBorder : ''}`}>
+          <div
+            className={`${styles.inputWrapper} ${
+              errors.email ? styles.errorBorder : ""
+            }`}
+          >
             <FaEnvelope className={styles.icon} />
             <input
               type="email"
@@ -104,11 +147,18 @@ function Auth() {
               onChange={handleChange}
             />
           </div>
-          {errors.email && <span className={styles.errorMsg}>{errors.email}</span>}
+          {errors.email && (
+            <span className={styles.errorMsg}>{errors.email}</span>
+          )}
         </div>
 
+        {/* PASSWORD */}
         <div className={styles.inputGroup}>
-          <div className={`${styles.inputWrapper} ${errors.password ? styles.errorBorder : ''}`}>
+          <div
+            className={`${styles.inputWrapper} ${
+              errors.password ? styles.errorBorder : ""
+            }`}
+          >
             <FaLock className={styles.icon} />
             <input
               type="password"
@@ -118,26 +168,45 @@ function Auth() {
               onChange={handleChange}
             />
           </div>
-          {errors.password && <span className={styles.errorMsg}>{errors.password}</span>}
+          {errors.password && (
+            <span className={styles.errorMsg}>{errors.password}</span>
+          )}
         </div>
 
-        {serverError && <div className={styles.serverError}>{serverError}</div>}
+        {/* SERVER ERROR */}
+        {serverError && (
+          <div className={styles.serverError}>{serverError}</div>
+        )}
 
+        {/* FORGOT PASSWORD */}
         {isLogin && (
           <div className={styles.forgotPass}>
-            <a href="#">Forgot Password?</a>
+            <a href="/forgot-password">Forgot Password?</a>
           </div>
         )}
 
-        <button type="submit" className={styles.submitBtn} disabled={loading}>
-          {loading ? <span className={styles.loader}></span> : (isLogin ? 'Sign In' : 'Sign Up')}
+        {/* SUBMIT */}
+        <button
+          type="submit"
+          className={styles.submitBtn}
+          disabled={loading}
+        >
+          {loading ? (
+            <span className={styles.loader}></span>
+          ) : isLogin ? (
+            "Sign In"
+          ) : (
+            "Sign Up"
+          )}
         </button>
       </form>
 
+      {/* DIVIDER */}
       <div className={styles.divider}>
         <span>Or continue with</span>
       </div>
 
+      {/* SOCIAL */}
       <div className={styles.socialButtons}>
         <button className={styles.socialBtn}>
           <FaGoogle color="#DB4437" /> <span>Google</span>
@@ -147,10 +216,11 @@ function Auth() {
         </button>
       </div>
 
+      {/* SWITCH */}
       <p className={styles.footerText}>
-        {isLogin ? "Don't have an account?" : 'Already have an account?'}
+        {isLogin ? "Don't have an account?" : "Already have an account?"}
         <span onClick={toggleMode} className={styles.link}>
-          {isLogin ? 'Sign Up' : 'Log In'}
+          {isLogin ? "Sign Up" : "Log In"}
         </span>
       </p>
     </div>
