@@ -1,4 +1,4 @@
-package com.jobPortal.Repositorie;
+package com.jobPortal.Repository;
 
 import com.jobPortal.Model.Users.Recruiter;
 import com.jobPortal.Model.Users.User;
@@ -14,4 +14,6 @@ public interface RecruiterRepository extends JpaRepository<Recruiter, UUID> {
     boolean existsByUser(User user);
 
     Optional<Recruiter> findByUser_Email(String email);
+
+    Optional<Recruiter> findByUserId(UUID userId);
 }

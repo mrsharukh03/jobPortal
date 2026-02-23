@@ -31,7 +31,7 @@ public class SecurityConfig {
         http.csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> {})
                 .authorizeHttpRequests(request -> request
-                        .requestMatchers( "/api/v1/auth/test","/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**","/api/v1/public/**").permitAll()
+                        .requestMatchers( "/api/v1/auth/test","/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**","/api/v1/public/**","/api/v1/admin/auth/**").permitAll()
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/api/v1/user/**").hasRole("USER")
                         .requestMatchers("/api/v1/seeker/**").hasRole("SEEKER")
@@ -55,7 +55,7 @@ public class SecurityConfig {
                 "http://localhost:5173",
                 "http://192.168.1.4:5173"
         ));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT","PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
 

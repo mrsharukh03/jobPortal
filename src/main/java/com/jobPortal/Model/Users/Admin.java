@@ -14,18 +14,21 @@ import java.util.UUID;
 @Table(name = "admin")
 public class Admin {
 
-
-
     @Id
     private UUID id;
 
     @OneToOne
+    @MapsId
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
+
     @Lob
     @Column(name = "profile_image", columnDefinition = "LONGBLOB")
     private byte[] profileImage;
+
     private String adminSpecificInfo;
+
     private boolean isSuperAdmin;
 }
+
 

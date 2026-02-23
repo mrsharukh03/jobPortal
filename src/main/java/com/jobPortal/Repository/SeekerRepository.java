@@ -1,10 +1,9 @@
-package com.jobPortal.Repositorie;
+package com.jobPortal.Repository;
 
 import com.jobPortal.Model.Users.Seeker;
 import com.jobPortal.Model.Users.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-
 import java.util.UUID;
 
 @Repository

@@ -1,4 +1,4 @@
-package com.jobPortal.Repositorie;
+package com.jobPortal.Repository;
 
 import com.jobPortal.Model.Users.User;
 import org.springframework.data.jpa.repository.JpaRepository;

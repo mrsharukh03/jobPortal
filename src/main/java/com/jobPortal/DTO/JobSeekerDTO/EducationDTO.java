@@ -1,14 +1,9 @@
 package com.jobPortal.DTO.JobSeekerDTO;
 
 import jakarta.validation.constraints.*;
-
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class EducationDTO {
     @NotBlank(message = "Degree is required")
     private String degree;
@@ -19,19 +14,14 @@ public class EducationDTO {
     @NotBlank(message = "College name is required")
     private String collegeName;
 
-    @NotBlank(message = "Country is required")
-    private String country;
-
-    @Min(value = 1950, message = "Start year must be after 1950")
-    @Max(value = 2100, message = "Start year seems invalid")
+    @Min(value = 1950, message = "Invalid Start Year")
     private int startYear;
 
-    @Min(value = 1950, message = "End year must be after 1950")
-    @Max(value = 2100, message = "End year seems invalid")
     private int endYear;
+    private String country;
 
     @NotBlank(message = "Grade type is required")
-    private String gradeType;
+    private String gradeType; // CGPA / Percentage
 
     @NotBlank(message = "Grade value is required")
     private String gradeValue;

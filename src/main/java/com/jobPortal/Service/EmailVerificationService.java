@@ -3,7 +3,7 @@ package com.jobPortal.Service;
 import com.jobPortal.DTO.AuthDTO.MailSendResult;
 import com.jobPortal.DTO.AuthDTO.TokenVerificationResult;
 import com.jobPortal.Model.EmailVerification;
-import com.jobPortal.Repositorie.EmailVerificationRepo;
+import com.jobPortal.Repository.EmailVerificationRepo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;

@@ -21,6 +21,7 @@ public class JobRequestDTO {
     private String companyLogoUrl;
     private JobStatus status = JobStatus.OPEN;
     private boolean isActive = true;
+    private LocalDate postedDate;
     private LocalDate lastDateToApply;
     private List<String> requiredSkills;
     private boolean featured = false;

@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+
 @Entity
 @Data
 @NoArgsConstructor
@@ -15,17 +16,17 @@ public class Education {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String degree;           // e.g., B.Tech, MBA
-    private String fieldOfStudy;     // e.g., Computer Science, Finance
+    private String degree;
+    private String fieldOfStudy;
     private String collegeName;
     private String country;
 
     private int startYear;
     private int endYear;
-    private String gradeType;        // e.g., CGPA, Percentage
-    private String gradeValue;       // e.g., 8.2, or 78%
+    private String gradeType;
+    private String gradeValue;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "seeker_id")
     private Seeker seeker;
 }

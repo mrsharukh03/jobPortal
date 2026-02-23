@@ -2,14 +2,12 @@ package com.jobPortal.Service;
 
 import com.jobPortal.DTO.RecruiterDTO.RecruiterProfileDTO;
 import com.jobPortal.DTO.RecruiterDTO.RecruiterViewDTO;
+import com.jobPortal.Exception.BusinessException;
 import com.jobPortal.Model.Users.Recruiter;
-import com.jobPortal.Model.Users.User;
-import com.jobPortal.Repositorie.RecruiterRepository;
-import com.jobPortal.Repositorie.UserRepository;
+import com.jobPortal.Repository.RecruiterRepository;
+import com.jobPortal.Repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -29,18 +27,14 @@ public class RecruiterService {
         this.recruiterRepository = recruiterRepository;
     }
 
-    public ResponseEntity<?> updateProfile(String username, RecruiterProfileDTO dto) {
-        try{
-            User user = userRepository.findByEmail(username);
-            if(user == null){
-                throw new RuntimeException("User not found");
-            }
+    public boolean updateProfile(UUID userId, RecruiterProfileDTO dto) {
+        Optional<Recruiter> recruiteropt = recruiterRepository.findById(userId);
+        if (recruiteropt.isEmpty()) {
+            throw new BusinessException("Recruiter profile not found");
+        }
 
             // 2️⃣ Find recruiter linked to user
-            Recruiter recruiter = recruiterRepository.findByUser(user);
-            if(recruiter == null){
-                throw new RuntimeException("Recruiter profile not found");
-            }
+            Recruiter recruiter = recruiteropt.get();
 
             // 3️⃣ Map DTO → Entity
             recruiter.setPhone(dto.getPhone());
@@ -66,24 +60,18 @@ public class RecruiterService {
             recruiterRepository.save(recruiter);
 
             // 5️⃣ Response
-            return ResponseEntity.ok(
-                    "Recruiter profile updated successfully"
-            );
-        }catch(Exception e){
-            log.error("Error while updating Recruiter Profile {}",e.getMessage());
-            return new ResponseEntity<>("Something went wrong", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+            return true;
     }
 
-    public ResponseEntity<?> getProfile(UUID userId) {
-        try {
+    public RecruiterViewDTO getProfile(UUID userId) {
             Optional<Recruiter> recruiteropt = recruiterRepository.findById(userId);
             if (recruiteropt.isEmpty()) {
-                return new ResponseEntity<>("Recruiter profile not found", HttpStatus.NOT_FOUND);
+                throw new BusinessException("Recruiter profile not found");
             }
+
             Recruiter recruiter = recruiteropt.get();
 
-            RecruiterViewDTO dto = new RecruiterViewDTO(
+            RecruiterViewDTO recruiterProfileViewDTO = new RecruiterViewDTO(
                     recruiter.getId(),
                     recruiter.getPhone(),
                     recruiter.getCompanyLogoUrl(),
@@ -103,12 +91,7 @@ public class RecruiterService {
                     recruiter.getUpdateTime()
             );
 
-            return ResponseEntity.ok(dto);
-
-        } catch (Exception e) {
-            log.error("Error fetching recruiter profile: {}", e.getMessage());
-            return new ResponseEntity<>("Something went wrong", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+            return recruiterProfileViewDTO;
     }
 
 

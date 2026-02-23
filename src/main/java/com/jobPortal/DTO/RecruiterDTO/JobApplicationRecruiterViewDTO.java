@@ -5,33 +5,43 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
-@Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Data
 public class JobApplicationRecruiterViewDTO {
 
         private Long applicationId;
 
-        // Job post related
-        private String jobPostId;
-        private String jobPostName;
+        private Long jobPostId;
+        private String jobTitle;
 
-        // Student basic info
-        private String studentName;
-        private String studentEmail;
+        // Candidate Info
+        private String candidateName;
+        private String email;
+        private String phone;
+        private String location;
+        private Integer totalExperience;
+
         private List<String> skills;
 
-        // Portfolio Links
+        // Portfolio
         private String resumeUrl;
         private String linkedinUrl;
         private String githubUrl;
-
-        // Application metadata
-        private Date appliedDate = new Date();
-        private ApplicationStatus status = ApplicationStatus.PENDING;
-        private boolean selection = false;
         private String coverLetter;
+
+        // AI
+        private Integer aiMatchScore;
+        private String aiSummary;
+
+        // Application Info
+        private LocalDateTime appliedAt;
+        private ApplicationStatus status;
+        private Integer rating;
+        private String recruiterNotes;
+        private Long viewCount;
 }

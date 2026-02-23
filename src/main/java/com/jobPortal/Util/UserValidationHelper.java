@@ -3,9 +3,9 @@ package com.jobPortal.Util;
 import com.jobPortal.Model.Users.Recruiter;
 import com.jobPortal.Model.Users.Seeker;
 import com.jobPortal.Model.Users.User;
-import com.jobPortal.Repositorie.RecruiterRepository;
-import com.jobPortal.Repositorie.SeekerRepository;
-import com.jobPortal.Repositorie.UserRepository;
+import com.jobPortal.Repository.RecruiterRepository;
+import com.jobPortal.Repository.SeekerRepository;
+import com.jobPortal.Repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

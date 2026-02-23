@@ -1,7 +1,9 @@
 package com.jobPortal.DTO;
 
+import com.jobPortal.DTO.MultiUseDTO.SkillDTO;
 import com.jobPortal.Enums.JobStatus;
 import com.jobPortal.Enums.JobType;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
@@ -28,7 +30,7 @@ public class JobPostDTO {
     private String location;
 
     @NotNull(message = "Job type is required")
-    private JobType type; // FULL_TIME, PART_TIME, CONTRACT
+    private JobType type;
 
     @NotBlank(message = "Category is required")
     private String category;
@@ -39,8 +41,6 @@ public class JobPostDTO {
 
     @Min(value = 0, message = "Maximum salary cannot be negative")
     private Integer maxSalary;
-
-    // Custom validation (max >= min) will need @AssertTrue or in service layer
 
     @NotBlank(message = "Experience requirement is required")
     private String experienceRequired;
@@ -62,10 +62,10 @@ public class JobPostDTO {
 
     // ===== Skills =====
     @NotEmpty(message = "At least one skill is required")
-    private List<@NotBlank(message = "Skill cannot be blank") String> requiredSkills;
+    @Valid
+    private List<SkillDTO> requiredSkills;
 
     // ===== Admin / Analytics / Premium Hooks =====
     private boolean featured = false;
     private int priorityScore = 0;
-
 }

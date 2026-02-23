@@ -1,6 +1,7 @@
 package com.jobPortal.Controller;
 
 
+import com.jobPortal.Enums.Role;
 import com.jobPortal.Security.JwtUserPrincipal;
 import com.jobPortal.Service.UserService;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -11,44 +12,37 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/v1/user")
 @Tag(name = "User")
-public class UserController{
-    private final UserService userServices;
+public class UserController {
 
+    private final UserService userService;
 
-    public UserController(UserService userServices) {
-        this.userServices = userServices;
+    public UserController(UserService userService) {
+        this.userService = userService;
     }
+
+    /* ================= ROLE ASSIGN ================= */
 
     @PostMapping("/assign-role")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<?> createJobSeekerProfile(@RequestParam("role") String role, @AuthenticationPrincipal JwtUserPrincipal principal){
-        return userServices.createUserType(principal.getEmail(), role);
+    public ResponseEntity<?> assignRole(
+            @RequestParam("role") Role role,
+            @AuthenticationPrincipal JwtUserPrincipal principal
+    ) {
+        userService.createUserType(principal.getEmail(), role);
+        return ResponseEntity.ok(
+                Map.of("message", "Role assigned successfully")
+        );
     }
 
+    /* ================= CHECK PROFILE STATUS (NEW) ================= */
     @GetMapping("/profileStatusAndRole")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<?> getUserRoleAndProfileStatus(@AuthenticationPrincipal JwtUserPrincipal principal) {
-        return userServices.getUserRoleAndProfileStatus(principal.getEmail());
-    }
-
-    @GetMapping("/alerts")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<?> getAlert(@AuthenticationPrincipal JwtUserPrincipal principal){
-        return userServices.getAllAlerts(principal.getEmail());
-    }
-
-    @GetMapping("/profileUrl")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<?> getProfileImage(@AuthenticationPrincipal JwtUserPrincipal principal){
-        return userServices.getUserProfileImage(principal.getEmail());
-    }
-
-    @GetMapping("/profile")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<?> getUserProfile(@AuthenticationPrincipal JwtUserPrincipal principal){
-        return userServices.getUserProfile(principal.getEmail());
+    public ResponseEntity<?> getProfileStatusAndRole(@AuthenticationPrincipal JwtUserPrincipal principal) {
+        // Yeh logic Service me likhna behtar hai, main yahan call kar raha hu
+        return userService.getUserProfileStatus(principal.getUserId());
     }
 }

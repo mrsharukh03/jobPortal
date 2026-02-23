@@ -2,6 +2,8 @@ package com.jobPortal.Enums;
 
 public enum ApplicationStatus {
     PENDING,
-    ACCEPTED,
+    SHORTLISTED,
+    INTERVIEW_SCHEDULED,
+    SELECTED,
     REJECTED
 }

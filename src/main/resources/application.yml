@@ -5,6 +5,9 @@ spring:
     address: ${SPRING_SERVER_ADDRESS}
     port: ${SPRING_SERVER_PORT}
 
+  bootstrap:
+    super-admin: true
+
   servlet:
     multipart:
       max-file-size: 15MB
@@ -40,6 +43,13 @@ jwt:
 app:
     url: ${CLIENT_URL:http://localhost:5173}
 
+ai:
+  provider: ${AI_PROVIDER}
+  apiKey: ${AI_APIKEY}
+  model: ${AI_MODEL}
+  temperature: ${AI_TEMPERATURE:0.7}  # default 0.7 agar env me na ho
+
 
 file:
   upload-dir: C:\Users\LENOVO\Downloads\Spring_Projects
+

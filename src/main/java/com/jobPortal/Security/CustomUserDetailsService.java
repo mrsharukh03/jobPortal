@@ -1,7 +1,7 @@
 package com.jobPortal.Security;
 
 import com.jobPortal.Model.Users.User;
-import com.jobPortal.Repositorie.UserRepository;
+import com.jobPortal.Repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

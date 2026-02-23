@@ -6,15 +6,12 @@ import com.jobPortal.Exception.UserNotFoundException;
 import com.jobPortal.Model.Users.Recruiter;
 import com.jobPortal.Model.Users.Seeker;
 import com.jobPortal.Model.Users.User;
-import com.jobPortal.Repositorie.RecruiterRepository;
-import com.jobPortal.Repositorie.SeekerRepository;
-import com.jobPortal.Repositorie.UserRepository;
+import com.jobPortal.Repository.RecruiterRepository;
+import com.jobPortal.Repository.SeekerRepository;
+import com.jobPortal.Repository.UserRepository;
 import org.springframework.stereotype.Service;
-
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class UserQueryService {
@@ -31,35 +28,6 @@ public class UserQueryService {
         this.userRepository = userRepository;
         this.seekerRepository = seekerRepository;
         this.recruiterRepository = recruiterRepository;
-    }
-
-    public Map<String, String> getUserRoleAndProfileStatus(String email) {
-        User user = userRepository.findByEmail(email);
-        if (user == null)
-            throw new UserNotFoundException("User not found");
-
-        Map<String, String> response = new HashMap<>();
-
-        if (user.getRole().contains(Role.RECRUITER)) {
-            Recruiter recruiter = recruiterRepository.findByUser(user);
-            response.put("role", "RECRUITER");
-            response.put(
-                    "profileCompletion",
-                    recruiter != null && recruiter.isProfileComplete() ? "true" : "false"
-            );
-        } else if (user.getRole().contains(Role.SEEKER)) {
-            Seeker seeker = seekerRepository.findByUser(user);
-            response.put("role", "SEEKER");
-            response.put(
-                    "profileCompletion",
-                    seeker != null && seeker.isProfileComplete() ? "true" : "false"
-            );
-        } else {
-            response.put("role", "USER");
-            response.put("profileCompletion", "true");
-        }
-
-        return response;
     }
 
     public List<String> getAlerts(String email) {

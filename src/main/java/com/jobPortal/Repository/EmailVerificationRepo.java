@@ -1,4 +1,4 @@
-package com.jobPortal.Repositorie;
+package com.jobPortal.Repository;
 
 import com.jobPortal.Model.EmailVerification;
 import org.springframework.data.jpa.repository.JpaRepository;

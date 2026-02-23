@@ -65,10 +65,9 @@ public class JobPost {
     // ===== Admin / Premium Hooks =====
     private boolean featured;          // future subscription
     private int priorityScore;          // sorting
-    private boolean adminApproved;      // moderation
+    private boolean adminApproved = true;      // moderation
 
     // ===== Dates =====
-    @CreatedDate
     private LocalDateTime postedDate;
 
     private LocalDate lastDateToApply;

@@ -2,27 +2,24 @@ package com.jobPortal.Service;
 
 import com.jobPortal.DTO.AuthDTO.*;
 import com.jobPortal.Enums.Role;
+import com.jobPortal.Exception.BadRequestException;
+import com.jobPortal.Exception.BusinessException;
+import com.jobPortal.Exception.UserNotFoundException;
 import com.jobPortal.Model.Users.Recruiter;
 import com.jobPortal.Model.Users.Seeker;
 import com.jobPortal.Model.Users.User;
-import com.jobPortal.Repositorie.AdminRepository;
-import com.jobPortal.Repositorie.RecruiterRepository;
-import com.jobPortal.Repositorie.SeekerRepository;
-import com.jobPortal.Repositorie.UserRepository;
+import com.jobPortal.Repository.RecruiterRepository;
+import com.jobPortal.Repository.SeekerRepository;
+import com.jobPortal.Repository.UserRepository;
 import com.jobPortal.Security.JWTUtils;
-import com.jobPortal.Util.AuthHelper;
 import lombok.extern.log4j.Log4j2;
-import org.modelmapper.ModelMapper;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @Log4j2
@@ -31,408 +28,328 @@ public class UserService {
     private final UserRepository userRepository;
     private final SeekerRepository seekerRepository;
     private final RecruiterRepository recruiterRepository;
-    private final AdminRepository adminRepository;
     private final EmailVerificationService emailVerificationService;
-    private final ModelMapper modelMapper;
     private final PasswordEncoder passwordEncoder;
     private final JWTUtils jwtUtils;
 
-    public UserService(UserRepository userRepository, SeekerRepository seekerRepository, RecruiterRepository recruiterRepository, AdminRepository adminRepository, EmailVerificationService emailVerificationService, ModelMapper modelMapper, PasswordEncoder passwordEncoder, JWTUtils jwtUtils) {
+    public UserService(
+            UserRepository userRepository,
+            SeekerRepository seekerRepository,
+            RecruiterRepository recruiterRepository,
+            EmailVerificationService emailVerificationService,
+            PasswordEncoder passwordEncoder,
+            JWTUtils jwtUtils
+    ) {
         this.userRepository = userRepository;
         this.seekerRepository = seekerRepository;
         this.recruiterRepository = recruiterRepository;
-        this.adminRepository = adminRepository;
         this.emailVerificationService = emailVerificationService;
-        this.modelMapper = modelMapper;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtils = jwtUtils;
     }
 
-    public ResponseEntity<?> signup(SignupDTO signupRequest) {
+    /* ================= SIGNUP ================= */
+
+    @Transactional
+    public void signup(SignupDTO dto) {
+        String email = dto.getEmail().toLowerCase();
+
+        if (userRepository.existsByEmail(email)) {
+            throw new BadRequestException("Email already registered");
+        }
+
+        User user = new User();
+        user.setEmail(email);
+        user.setFullName(dto.getFullName());
+        user.setPassword(passwordEncoder.encode(dto.getPassword()));
+        user.setVerified(false);
+        user.setActive(false);
+        user.setRole(new ArrayList<>(List.of(Role.USER)));
+        user.setCreatedTime(LocalDateTime.now());
+        user.setUpdateTime(LocalDateTime.now());
+
+        userRepository.save(user);
+
+        // Email sending OUTSIDE DB critical logic
         try {
-            String email = signupRequest.getEmail().toLowerCase();
-
-            if (userRepository.existsByEmail(email)) {
-                return ResponseEntity
-                        .badRequest()
-                        .body(Map.of("message", "Oops! Looks like you’re already registered. Login instead?"));
-            }
-
-            User user = new User();
-            user.setFullName(signupRequest.getFullName());
-            user.setEmail(signupRequest.getEmail());
-            user.setPassword(passwordEncoder.encode(signupRequest.getPassword()));
-            user.setActive(false);
-            user.setVerified(false);
-            user.setCreatedTime(LocalDateTime.now());
-            user.setUpdateTime(LocalDateTime.now());
-            user.setRole(Collections.singletonList(Role.USER));
-            emailVerificationService.sendEmailVerificationLink(user.getEmail());
-            userRepository.save(user);
-            log.info("User registered: {}, verification email sent.", email);
-
-            return ResponseEntity
-                    .status(HttpStatus.CREATED)
-                    .body(Map.of("message", "User created. A verification link has been sent to your email."));
-        } catch (Exception e) {
-            log.error("Error registering user: {}", e.getMessage(), e);
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("message", "Something went wrong. Please try again later."));
-        }
-    }
-
-    public AuthResponseDTO login(LoginDTO loginDTO) throws RuntimeException{
-
-        String email = loginDTO.getEmail().toLowerCase();
-        User user = userRepository.findByEmail(email);
-
-        if (user == null) {
-            throw new RuntimeException("User not found");
-        }
-
-        String storedPassword = user.getPassword();
-
-        if (!AuthHelper.isBCryptEncoded(storedPassword)) {
-            throw new RuntimeException("Please reset your password");
-        }
-
-        if (!passwordEncoder.matches(loginDTO.getPassword(), storedPassword)) {
-            throw new RuntimeException("Invalid Password");
-        }
-
-        String accessToken = jwtUtils.generateAccessToken( user.getEmail(), user.getId(), user.getRole());
-        String refreshToken = jwtUtils.generateRefreshToken(user.getEmail(), user.getId());
-
-        return new AuthResponseDTO(accessToken, refreshToken);
-
-    }
-
-    public ResponseEntity<?> forgetPassword(String email) {
-        try {
-            email = email.toLowerCase();
-            User user = userRepository.findByEmail(email);
-            if (user == null) {
-                return ResponseEntity
-                        .badRequest()
-                        .body(Map.of("message", "Email not found"));
-            }
-            emailVerificationService.sendRecoveryOptionsEmail(email);
-            log.info("Recovery email sent to {}", email);
-            return ResponseEntity.ok(Map.of("message", "Recovery email sent. Please check your inbox."));
-        } catch (Exception e) {
-            log.error("Error sending recovery email: {}", e.getMessage(), e);
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("message", "Something went wrong. Please try again later."));
-        }
-    }
-
-    public ResponseEntity<?> resetPassword(ResetPasswordDTO passwordDTO) {
-        try {
-            TokenVerificationResult result = emailVerificationService.verifyToken(passwordDTO.getToken());
-            if (!result.isSuccess()) return new ResponseEntity<>(Map.of("message", result.getMessage()),HttpStatus.BAD_REQUEST);
-            String email = result.getEmail();
-            User user = userRepository.findByEmail(email);
-            user.setPassword(passwordEncoder.encode(passwordDTO.getPassword()));
-            userRepository.save(user);
-            return new ResponseEntity<>(Map.of("message", "Password change successfully"),HttpStatus.CREATED);
-        }catch (Exception e){
-            log.error("Error Resting user password {}",e.getMessage());
-            return new ResponseEntity<>(Map.of("message", "Something went wrong. Please try again later."),HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    public boolean validateAccessToken(String token) {
-        try {
-            String email = jwtUtils.extractEmail(token);
-            return jwtUtils.validateAccessToken(token, email);
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-
-    public String generateAccessTokenFromRefresh(String refreshToken) {
-
-        if (!jwtUtils.validateRefreshToken(refreshToken)) {
-            throw new RuntimeException("Invalid or expired refresh token");
-        }
-
-        UUID userId = jwtUtils.extractUserId(refreshToken);
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        return jwtUtils.generateAccessToken(
-                user.getEmail(),
-                user.getId(),
-                user.getRole()
-        );
-    }
-
-
-    public ResponseEntity<?> verifyEmail(String token) {
-        try {
-            TokenVerificationResult result = emailVerificationService.verifyToken(token);
-            if (result.isSuccess()) {
-                String email = result.getEmail();
-                User user = userRepository.findByEmail(email);
-                user.setVerified(true);
-                userRepository.save(user);
-
-                log.info("Email verified: {}", email);
-                return ResponseEntity.ok(Map.of("message", result.getMessage()));
-            }
-
-            return ResponseEntity
-                    .badRequest()
-                    .body(Map.of("message", result.getMessage()));
-        } catch (Exception e) {
-            log.error("Error verifying email token {}: {}", token, e.getMessage(), e);
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("message", "An error occurred while verifying the email."));
-        }
-    }
-
-    public ResponseEntity<?> resendVerificationLink(String email) {
-        try {
-            email = email.toLowerCase();
-            User user = userRepository.findByEmail(email);
-
-            if (user == null) {
-                return ResponseEntity
-                        .badRequest()
-                        .body(Map.of("message", "Email not found"));
-            }
-
-            if (user.isVerified()) {
-                return ResponseEntity
-                        .badRequest()
-                        .body(Map.of("message", "Email already verified"));
-            }
-
             emailVerificationService.sendEmailVerificationLink(email);
-            log.info("Verification link resent to {}", email);
-
-            return ResponseEntity
-                    .status(HttpStatus.CREATED)
-                    .body(Map.of("message", "Verification link sent. Please check your email."));
-        } catch (Exception e) {
-            log.error("Error resending verification link: {}", e.getMessage(), e);
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("message", "Something went wrong. Please try again later."));
+        } catch (Exception ex) {
+            log.error("Email verification failed for {}", email, ex);
+            throw new BusinessException("Failed to send verification email");
         }
     }
 
-    public AuthResponseDTO directLogin(String token) throws RuntimeException{
-        try{
-            TokenVerificationResult result = emailVerificationService.verifyToken(token);
-            if (!result.isSuccess()) {
-                throw new RuntimeException(result.getMessage());
-            }
-            String email = result.getEmail();
-            User user = userRepository.findByEmail(email);
-            if (user == null) {
-                throw new RuntimeException("User not found");
-            }
+    /* ================= LOGIN ================= */
 
-            String accessToken = jwtUtils.generateAccessToken(user.getEmail(),user.getId(), user.getRole());
-            String refreshToken = jwtUtils.generateRefreshToken(user.getEmail(), user.getId());
+    public AuthResponseDTO login(LoginDTO dto) {
+        User user = userRepository.findByEmail(dto.getEmail().toLowerCase());
 
-            return new AuthResponseDTO(accessToken, refreshToken);
-        }catch(RuntimeException e){
-            throw new RuntimeException(e.getMessage());
-        }catch (Exception e){
-            log.error("Error generating token: {}",e.getMessage());
-            throw new RuntimeException("User not found");
+        if (user == null)
+            throw new UserNotFoundException("User not found");
+
+        if (!passwordEncoder.matches(dto.getPassword(), user.getPassword()))
+            throw new BadRequestException("Invalid credentials");
+
+        if (!user.isVerified())
+            throw new BadRequestException("Email not verified");
+
+        if (!user.isActive())
+            throw new BadRequestException("Account is inactive");
+
+        boolean isAdmin = user.getRole().contains(Role.ADMIN)
+                || user.getRole().contains(Role.SUPER_ADMIN);
+
+        if (isAdmin) {
+            throw new BadRequestException("Login as Admin is not Allowed here !!");
         }
 
+        return buildAuthResponse(user);
     }
 
+    /* ================= PASSWORD ================= */
 
+    public void sendPasswordRecovery(String email) {
+        User user = userRepository.findByEmail(email.toLowerCase());
+
+        if (user == null)
+            throw new UserNotFoundException("User not found");
+
+        try {
+            emailVerificationService.sendRecoveryOptionsEmail(user.getEmail());
+        } catch (Exception ex) {
+            log.error("Password recovery email failed", ex);
+            throw new BusinessException("Failed to send recovery email");
+        }
+    }
+
+    @Transactional
+    public void resetPassword(ResetPasswordDTO dto) {
+        TokenVerificationResult result =
+                emailVerificationService.verifyToken(dto.getToken());
+
+        if (!result.isSuccess())
+            throw new BadRequestException(result.getMessage());
+
+        User user = userRepository.findByEmail(result.getEmail());
+        if (user == null)
+            throw new UserNotFoundException("User not found");
+
+        user.setPassword(passwordEncoder.encode(dto.getPassword()));
+        user.setUpdateTime(LocalDateTime.now());
+
+        userRepository.save(user);
+    }
+
+    /* ================= EMAIL ================= */
+
+    @Transactional
+    public void verifyEmail(String token) {
+        TokenVerificationResult result =
+                emailVerificationService.verifyToken(token);
+
+        if (!result.isSuccess())
+            throw new BadRequestException(result.getMessage());
+
+        User user = userRepository.findByEmail(result.getEmail());
+        if (user == null)
+            throw new UserNotFoundException("User not found");
+
+        user.setVerified(true);
+        user.setActive(true);
+        user.setUpdateTime(LocalDateTime.now());
+
+        userRepository.save(user);
+    }
+
+    /* ================= OAUTH ================= */
+
+    @Transactional
     public AuthResponseDTO processOAuthPostLogin(String fullName, String email) {
         email = email.toLowerCase();
         User user = userRepository.findByEmail(email);
 
         if (user == null) {
-            User newUser = new User();
-            newUser.setEmail(email);
-            newUser.setFullName(fullName);
-            newUser.setVerified(true); // Google email is already verified
-            newUser.setActive(true);
-            newUser.setCreatedTime(LocalDateTime.now());
-            newUser.setUpdateTime(LocalDateTime.now());
-            newUser.setRole(Collections.singletonList(Role.USER));
+            user = new User();
+            user.setEmail(email);
+            user.setFullName(fullName);
+            user.setVerified(true);
+            user.setActive(true);
+            user.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
+            user.setRole(new ArrayList<>(List.of(Role.USER)));
+            user.setCreatedTime(LocalDateTime.now());
+            user.setUpdateTime(LocalDateTime.now());
 
-            // Random encoded password, since login is via Google only
-            newUser.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
-
-            userRepository.save(newUser);
-            log.info("New Google OAuth user created: {}", email);
+            userRepository.save(user);
+        } else {
+            user.setVerified(true);
+            user.setActive(true);
+            user.setUpdateTime(LocalDateTime.now());
+            userRepository.save(user);
         }
-        String accessToken = jwtUtils.generateAccessToken(user.getEmail(), user.getId(), user.getRole());
-        String refreshToken = jwtUtils.generateRefreshToken(user.getEmail(),user.getId());
-        return new AuthResponseDTO(accessToken, refreshToken);
+
+        return buildAuthResponse(user);
+    }
+
+    /* ================= ROLE ================= */
+
+    @Transactional
+    public void createUserType(String email, Role role) {
+        User user = userRepository.findByEmail(email.toLowerCase());
+
+        if (user == null)
+            throw new UserNotFoundException("User not found");
+
+        if (role == Role.ADMIN || role == Role.SUPER_ADMIN)
+            throw new BadRequestException("Invalid role assignment");
+
+        if (user.getRole().contains(role))
+            throw new BusinessException("Role already assigned");
+
+        if (role == Role.SEEKER) {
+            if (!seekerRepository.existsByUser(user)) {
+                Seeker seeker = new Seeker();
+                seeker.setUser(user);
+                seekerRepository.save(seeker);
+            }
+            user.getRole().add(Role.SEEKER);
+
+        } else if (role == Role.RECRUITER) {
+            if (!recruiterRepository.existsByUser(user)) {
+                Recruiter recruiter = new Recruiter();
+                recruiter.setUser(user);
+                recruiterRepository.save(recruiter);
+            }
+            user.getRole().add(Role.RECRUITER);
+        }
+
+        user.setUpdateTime(LocalDateTime.now());
+        userRepository.save(user);
+    }
+
+    // 🔥 NEW METHOD: Check Profile Status (Handles Multiple Roles)
+    public ResponseEntity<?> getUserProfileStatus(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException("User not found"));
+
+        Map<String, Object> response = new HashMap<>();
+
+        var userRoles = user.getRole();
+
+        boolean isComplete = false;
+        String finalRole = "USER"; // Default value
+
+        // 1️⃣ Priority Check: Agar RECRUITER hai
+        if (userRoles.contains(Role.RECRUITER)) {
+            finalRole = "RECRUITER";
+            Optional<Recruiter> recruiter = recruiterRepository.findById(userId);
+            if (recruiter.isPresent() && recruiter.get().isProfileComplete()) {
+                isComplete = true;
+            }
+        }
+        // 2️⃣ Priority Check: Agar SEEKER hai
+        else if (userRoles.contains(Role.SEEKER)) {
+            finalRole = "SEEKER";
+            Optional<Seeker> seeker = seekerRepository.findById(userId);
+            if (seeker.isPresent() && seeker.get().isProfileComplete()) {
+                isComplete = true;
+            }
+        }
+
+        // Response me ab hum "List" string nahi, balki ek Saaf String bhejenge
+        response.put("role", finalRole); // Example: "SEEKER" (Not "[USER, SEEKER]")
+        response.put("isProfileComplete", isComplete);
+
+        return ResponseEntity.ok(response);
+    }
+    /* ================= GENERATE NEW ACCESS TOKEN ================= */
+
+    public String generateAccessTokenFromRefresh(String refreshToken) {
+
+        if (!jwtUtils.validateRefreshToken(refreshToken)) {
+            throw new BadRequestException("Invalid or expired refresh token");
+        }
+
+        UUID userId = jwtUtils.extractUserId(refreshToken);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        if (!user.isActive() || !user.isVerified()) {
+            throw new BadRequestException("User account is not active");
+        }
+
+        return jwtUtils.generateAccessToken(
+                user.getEmail(),
+                user.getId(),
+                new ArrayList<>(user.getRole())
+        );
+    }
+
+    @Transactional
+    public boolean changePassword(String email, ChangePasswordDto dto) {
+
+        User user = userRepository.findByEmail(email);
+        if (user == null) {
+            throw new UserNotFoundException("User not found");
+        }
+
+        if (!passwordEncoder.matches(dto.getCurrentPassword(), user.getPassword())) {
+            throw new BusinessException("Current password is incorrect");
+        }
+
+        if (passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("New password cannot be same as old password");
+        }
+
+        user.setPassword(passwordEncoder.encode(dto.getPassword()));
+        user.setUpdateTime(LocalDateTime.now());
+        userRepository.save(user);
+        return true;
     }
 
 
     @Transactional
-    public ResponseEntity<?> createUserType(String email,String role) {
-        try {
-            User user = userRepository.findByEmail(email);
-            if (user == null) return new ResponseEntity<>("User not found",HttpStatus.NOT_FOUND);
+    public AuthResponseDTO directLogin(String token) {
 
-            if (role.equals(Role.ADMIN.toString()) || role.equals(Role.SUPER_ADMIN.toString())){
-                return new ResponseEntity<>("Invalid Operation",HttpStatus.BAD_REQUEST);
-            }
-            if(role.equals(Role.SEEKER.toString()) && !seekerRepository.existsByUser(user)){
-                user.getRole().add(Role.SEEKER);
-                Seeker seeker = new Seeker();
-                seeker.setUser(user);
-                seeker.setCreatedTime(LocalDateTime.now());
-                seeker.setUpdateTime(LocalDateTime.now());
-                userRepository.save(user);
-                seekerRepository.save(seeker);
-            } else if (role.equals(Role.RECRUITER.toString()) && !recruiterRepository.existsByUser(user)) {
-                user.getRole().add(Role.RECRUITER);
-                Recruiter recruiter = new Recruiter();
-                recruiter.setUser(user);
-                recruiter.setCreatedTime(LocalDateTime.now());
-                recruiter.setUpdateTime(LocalDateTime.now());
-                userRepository.save(user);
-                recruiterRepository.save(recruiter);
-            }else{
-                return new ResponseEntity<>("Invalid User Type",HttpStatus.BAD_REQUEST);
-            }
-        }catch (Exception e){
-        log.error("Error creating user profile: {}",e.getMessage());
-        return new ResponseEntity<>("Something went wrong",HttpStatus.INTERNAL_SERVER_ERROR);
+        TokenVerificationResult result =
+                emailVerificationService.verifyToken(token);
+
+        if (!result.isSuccess()) {
+            throw new BadRequestException(result.getMessage());
         }
-        return new ResponseEntity<>("Profile created successfully",HttpStatus.CREATED);
-    }
 
-    public ResponseEntity<?> getUserRoleAndProfileStatus(String email) {
-        try {
-            User user = userRepository.findByEmail(email);
-            if (user == null) return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
-            Map<String,String> response = new HashMap<>();
-            List<Role> userRoles = user.getRole();
-            if(userRoles.contains(Role.RECRUITER)) {
-                Recruiter recruiter = recruiterRepository.findByUser(user);
-                if(recruiter != null){
-                    response.put("role","RECRUITER");
-                    response.put("profileCompletion", recruiter.isProfileComplete() ? "true" : "false");
-                }
-            } else if (userRoles.contains(Role.SEEKER)) {
-                Seeker seeker = seekerRepository.findByUser(user);
-                if(seeker != null){
-                    response.put("role","SEEKER");
-                    response.put("profileCompletion", seeker.isProfileComplete() ? "true" : "false");
-                }
-            } else if (userRoles.contains(Role.USER)) {
-                response.put("role","USER");
-                response.put("profileCompletion","true"); // default
-            }
+        User user = userRepository.findByEmail(result.getEmail());
 
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("Error sending user roles {}", e.getMessage());
-            return new ResponseEntity<>("Something went wrong", HttpStatus.INTERNAL_SERVER_ERROR);
+        if (user == null) {
+            throw new UserNotFoundException("User not found");
         }
+
+        if (!user.isActive()) {
+            throw new BadRequestException("Account is inactive");
+        }
+
+        user.setVerified(true);
+        user.setUpdateTime(LocalDateTime.now());
+        userRepository.save(user);
+
+        return buildAuthResponse(user);
     }
 
 
-    public ResponseEntity<?> getAllAlerts(String email) {
-        try {
-            User user = userRepository.findByEmail(email);
-            if (user == null) {
-                return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
-            }
-            List<String> alerts = new ArrayList<>();
 
-            if (!user.isVerified()) {
-                alerts.add("Email verification needed.");
-            }
+    /* ================= HELPER ================= */
 
-            List<Role> roles = user.getRole();
-
-            if (roles.contains(Role.SEEKER)) {
-                Seeker seeker = seekerRepository.findByUser(user);
-                if (seeker != null) {
-                    boolean profileComplete =
-                            seeker.getResume() != null && !(seeker.getResume() == null) &&
-                                    seeker.getPhone() != null &&
-                                    seeker.getGender() != null &&
-                                    seeker.getEducationList() != null && !seeker.getEducationList().isEmpty();
-
-                    if (!profileComplete) {
-                        alerts.add("Your profile is incomplete.");
-                    }
-                } else {
-                    alerts.add("Please choose your role.");
-                }
-
-            } else if (roles.contains(Role.RECRUITER)) {
-                Recruiter recruiter = recruiterRepository.findByUser(user);
-                if (recruiter != null) {
-                    boolean profileComplete =
-                            recruiter.getCompanyName() != null && !recruiter.getCompanyName().isEmpty() &&
-                                    recruiter.getDesignation() != null && !recruiter.getDesignation().isEmpty() &&
-                                    recruiter.getPhone() != null &&
-                                    recruiter.getLocation() != null && !recruiter.getLocation().isEmpty();
-
-                    if (!profileComplete) {
-                        alerts.add("Your profile is incomplete.");
-                    }
-
-                    if (!user.isActive()) {
-                        alerts.add("Your account is blocked. Please contact admin.");
-                    }
-
-                } else {
-                    alerts.add("Please choose your role.");
-                }
-            }
-            return ResponseEntity.ok(alerts);
-        } catch (Exception e) {
-            return new ResponseEntity<>("Something went wrong", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    public ResponseEntity<?> getUserProfile(String username) {
-        try{
-            User user = userRepository.findByEmail(username);
-            if (user == null) {
-                return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
-            }
-            UserProfile userProfile = new UserProfile();
-            userProfile.setFullName(user.getFullName());
-            userProfile.setEmail(user.getEmail());
-            userProfile.setActive(user.isActive());
-            userProfile.setVerified(user.isVerified());
-            userProfile.setProfileURL(user.getProfileUrl());
-            userProfile.setCreatedTime(user.getCreatedTime());
-            return ResponseEntity.ok(userProfile);
-        }catch (Exception e){
-            log.error("Error fetching user profile {}",e.getMessage());
-            return new ResponseEntity<>("Something went wrong!!",HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    public ResponseEntity<?> getUserProfileImage(String username) {
-        try{
-            User user = userRepository.findByEmail(username);
-            if (user == null) {
-                return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
-            }
-            UserProfile userProfile = new UserProfile();
-            userProfile.setProfileURL(user.getProfileUrl());
-            return ResponseEntity.ok(userProfile);
-        }catch (Exception e){
-            log.error("Error fetching user profile image {}",e.getMessage());
-            return new ResponseEntity<>("Something went wrong!!",HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    private AuthResponseDTO buildAuthResponse(User user) {
+        return new AuthResponseDTO(
+                jwtUtils.generateAccessToken(
+                        user.getEmail(),
+                        user.getId(),
+                        new ArrayList<>(user.getRole())
+                ),
+                jwtUtils.generateRefreshToken(
+                        user.getEmail(),
+                        user.getId()
+                )
+        );
     }
 }

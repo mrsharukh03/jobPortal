@@ -1,30 +1,32 @@
 package com.jobPortal.DTO.JobSeekerDTO;
 
-import com.jobPortal.Enums.MarriageStatus;
-import jakarta.validation.constraints.*;
-import lombok.AllArgsConstructor;
+import com.jobPortal.DTO.MultiUseDTO.SkillDTO;
+import jakarta.validation.constraints.Min;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import java.util.Date;
+import org.hibernate.validator.constraints.URL;
+import java.util.List;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class PersonalDetailDTO {
+public class ProfessionalDetailsDTO {
 
-    @NotBlank(message = "Phone number is required")
-    @Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "Invalid phone number")
-    private String phone;
+    private String bio;
 
-    @NotBlank(message = "Gender is required")
-    @Pattern(regexp = "^(Male|Female|Other)$", message = "Gender must be Male, Female or Other")
-    private String gender;
+    @URL(message = "Invalid LinkedIn URL")
+    private String linkedinProfile;
 
-    @NotNull(message = "Date of Birth is required")
-    @Past(message = "Date of Birth must be in the past")
-    private Date DOB;
+    @URL(message = "Invalid GitHub URL")
+    private String githubProfile;
 
-    @NotNull(message = "Marriage status is required")
-    private MarriageStatus marriageStatus;
+    @URL(message = "Invalid Portfolio URL")
+    private String portfolioUrl;
+
+    @Min(value = 0, message = "Salary cannot be negative")
+    private Double expectedSalary;
+
+    private String noticePeriod;
+
+    private List<String> languages;
+    private List<String> preferredLocations;
+
+    private List<SkillDTO> skills;
 }

@@ -6,12 +6,13 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Data @NoArgsConstructor @AllArgsConstructor
 public class ApplicationDTO {
     private Long applicationId;
-    private Date appliedDate;
+    private LocalDateTime appliedDate;
     private ApplicationStatus status;
 
     // From JobPost

@@ -1,4 +1,4 @@
-package com.jobPortal.Repositorie;
+package com.jobPortal.Repository;
 
 import com.jobPortal.Model.Skill;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -10,5 +10,4 @@ import java.util.Optional;
 @Repository
 public interface SkillRepository extends JpaRepository<Skill,Long> {
     Optional<Skill> findByNameIgnoreCase(String trim);
-    List<Skill> findAllByIdIn(List<Long> ids);
 }

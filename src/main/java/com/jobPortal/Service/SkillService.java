@@ -1,8 +1,8 @@
 package com.jobPortal.Service;
 
-import com.jobPortal.Repositorie.SeekerRepository;
-import com.jobPortal.Repositorie.SkillRepository;
-import com.jobPortal.Repositorie.UserRepository;
+import com.jobPortal.Repository.SeekerRepository;
+import com.jobPortal.Repository.SkillRepository;
+import com.jobPortal.Repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -3,8 +3,8 @@ package com.jobPortal.Model.Admin;
 import com.jobPortal.Enums.Role;
 import com.jobPortal.Model.Users.Admin;
 import com.jobPortal.Model.Users.User;
-import com.jobPortal.Repositorie.AdminRepository;
-import com.jobPortal.Repositorie.UserRepository;
+import com.jobPortal.Repository.AdminRepository;
+import com.jobPortal.Repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -26,10 +26,10 @@ public class SuperAdminBootstrap implements CommandLineRunner {
     @Override
     public void run(String... args) {
 
-        String email = "superadmin@jobportal.com";
+        String email = "mrsharukh003@hotmail.com";
 
         if (userRepository.existsByEmail(email)) {
-            return; // already exists
+            return;
         }
 
         User user = new User();

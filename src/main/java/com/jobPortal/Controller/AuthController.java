@@ -13,113 +13,73 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
-
 @RestController
 @RequestMapping("/api/v1/auth")
 @Tag(name = "Auth")
 public class AuthController {
 
-    private final UserService userServices;
+    private final UserService userService;
 
-    public AuthController(UserService userServices) {
-        this.userServices = userServices;
+    public AuthController(UserService userService) {
+        this.userService = userService;
     }
+
+    /* ================= SIGNUP ================= */
 
     @PostMapping("/signup")
-    public ResponseEntity<?> signup(@Valid @RequestBody SignupDTO signupRequest) {
-        return userServices.signup(signupRequest);
+    public ResponseEntity<?> signup(@Valid @RequestBody SignupDTO dto) {
+        userService.signup(dto);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(Map.of("message", "User registered successfully. Please verify email."));
     }
+
+    /* ================= LOGIN ================= */
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginDTO loginDTO, HttpServletResponse response) {
-        try {
-            AuthResponseDTO authResponse = userServices.login(loginDTO);
-            ResponseCookie accessCookie = ResponseCookie.from("accessToken", authResponse.getAccessToken())
-                    .httpOnly(true)
-                    .secure(false)
-                    .path("/")
-                    .maxAge(15 * 60)
-                    .sameSite("Lax")
-                    .build();
-
-            ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", authResponse.getRefreshToken())
-                    .httpOnly(true)
-                    .secure(false)
-                    .path("/")
-                    .maxAge(7 * 24 * 60 * 60)
-                    .sameSite("Lax")
-                    .build();
-
-            response.addHeader("Set-Cookie", accessCookie.toString());
-            response.addHeader("Set-Cookie", refreshCookie.toString());
-
-            return ResponseEntity.ok("Login successful");
-
-        } catch (Exception e) {
-            return ResponseEntity
-                    .status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("status", "error", "message", e.getMessage()));
-
-        }
+    public ResponseEntity<?> login(
+            @Valid @RequestBody LoginDTO dto,
+            HttpServletResponse response
+    ) {
+        AuthResponseDTO auth = userService.login(dto);
+        setAuthCookies(response, auth);
+        return ResponseEntity.ok(Map.of("message", "Login successful"));
     }
 
-
-    @GetMapping("/check")
-    public ResponseEntity<?> checkLoginStatus(HttpServletRequest request) {
-        String accessToken = null;
-
-        if (request.getCookies() != null) {
-            for (Cookie cookie : request.getCookies()) {
-                if ("accessToken".equals(cookie.getName())) {
-                    accessToken = cookie.getValue();
-                    break;
-                }
-            }
-        }
-        if (accessToken == null || !userServices.validateAccessToken(accessToken)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Not authenticated");
-        }
-        return ResponseEntity.ok("Authenticated");
-    }
+    /* ================= REFRESH TOKEN ================= */
 
     @PostMapping("/refresh")
-    public ResponseEntity<?> refreshAccessToken(HttpServletRequest request, HttpServletResponse response) {
-        try{
-            String refreshToken = null;
-
-            if (request.getCookies() != null) {
-                for (Cookie cookie : request.getCookies()) {
-                    if ("refreshToken".equals(cookie.getName())) {
-                        refreshToken = cookie.getValue();
-                        break;
-                    }
-                }
-            }
-
-            if (refreshToken == null || !userServices.validateAccessToken(refreshToken)) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid refresh token");
-            }
-
-            String newAccessToken = userServices.generateAccessTokenFromRefresh(refreshToken);
-            ResponseCookie newAccessCookie = ResponseCookie.from("accessToken", newAccessToken)
-                    .httpOnly(true)
-                    .secure(false)
-                    .path("/")
-                    .maxAge(15 * 60)
-                    .sameSite("Lax")
-                    .build();
-
-            response.addHeader("Set-Cookie", newAccessCookie.toString());
-
-            return ResponseEntity.ok("Access token refreshed");
-        }catch (Exception e){
-            return new ResponseEntity<>("Something went wrong",HttpStatus.INTERNAL_SERVER_ERROR);
+    public ResponseEntity<?> refreshToken(
+            @CookieValue(name = "refreshToken", required = false) String refreshToken,
+            HttpServletResponse response
+    ) {
+        if (refreshToken == null) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", "Refresh token missing"));
         }
+
+        String newAccessToken = userService.generateAccessTokenFromRefresh(refreshToken);
+
+        ResponseCookie accessCookie = ResponseCookie.from("accessToken", newAccessToken)
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                .maxAge(15 * 60)
+                .sameSite("Lax")
+                .build();
+
+        response.addHeader("Set-Cookie", accessCookie.toString());
+
+        return ResponseEntity.ok(Map.of("message", "Access token refreshed"));
     }
+
+    /* ================= LOGOUT ================= */
 
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletResponse response) {
-        ResponseCookie accessCookie = ResponseCookie.from("accessToken", "")
+
+        ResponseCookie clearAccess = ResponseCookie.from("accessToken", "")
                 .httpOnly(true)
                 .secure(false)
                 .path("/")
@@ -127,68 +87,75 @@ public class AuthController {
                 .sameSite("Lax")
                 .build();
 
-        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", "")
+        ResponseCookie clearRefresh = ResponseCookie.from("refreshToken", "")
                 .httpOnly(true)
                 .secure(false)
                 .path("/")
                 .maxAge(0)
                 .sameSite("Lax")
                 .build();
-        response.addHeader("Set-Cookie", accessCookie.toString());
-        response.addHeader("Set-Cookie", refreshCookie.toString());
 
-        return ResponseEntity.ok("Logged out");
+        response.addHeader("Set-Cookie", clearAccess.toString());
+        response.addHeader("Set-Cookie", clearRefresh.toString());
+
+        return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
     }
 
+    /* ================= EMAIL ================= */
 
-    @PostMapping("/email-verify/resend")
-    public ResponseEntity<?> resendEmail(@Valid @RequestBody EmailDTO emailDTO) {
-        return userServices.resendVerificationLink(emailDTO.getEmail());
+    @PostMapping("/email/verify")
+    public ResponseEntity<?> verifyEmail(@Valid @RequestBody TokenDTO dto) {
+        userService.verifyEmail(dto.getToken());
+        return ResponseEntity.ok(Map.of("message", "Email verified successfully"));
     }
 
-    @PostMapping("/email-verify")
-    public ResponseEntity<?> emailVerification(@Valid @RequestBody TokenDTO tokenDTO) {
-        return userServices.verifyEmail(tokenDTO.getToken());
-    }
+    /* ================= PASSWORD ================= */
 
     @PostMapping("/password/forget")
-    public ResponseEntity<?> forgetPassword(@Valid @RequestBody EmailDTO emailDTO) {
-        return userServices.forgetPassword(emailDTO.getEmail());
+    public ResponseEntity<?> forgetPassword(@Valid @RequestBody EmailDTO dto) {
+        userService.sendPasswordRecovery(dto.getEmail());
+        return ResponseEntity.ok(Map.of("message", "Recovery email sent"));
     }
 
     @PostMapping("/password/reset")
-    public ResponseEntity<?> resetPassword(@Valid @RequestBody ResetPasswordDTO passwordDTO) {
-        return userServices.resetPassword(passwordDTO);
+    public ResponseEntity<?> resetPassword(@Valid @RequestBody ResetPasswordDTO dto) {
+        userService.resetPassword(dto);
+        return ResponseEntity.ok(Map.of("message", "Password reset successful"));
     }
+    /* ================= DIRECT LOGIN (MAGIC LINK) ================= */
 
     @PostMapping("/direct-login")
-    public ResponseEntity<?> directLogin(@Valid @RequestBody TokenDTO tokenDTO, HttpServletResponse response) {
-        try{
-            AuthResponseDTO authResponse = userServices.directLogin(tokenDTO.getToken());
-            ResponseCookie accessCookie = ResponseCookie.from("accessToken", authResponse.getAccessToken())
-                    .httpOnly(true)
-                    .secure(false)  // HTTPS ke liye true rakha hai, dev me false kar sakte ho
-                    .path("/")
-                    .maxAge(15 * 60)
-                    .sameSite("Lax")
-                    .build();
-
-            ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", authResponse.getRefreshToken())
-                    .httpOnly(true)
-                    .secure(false)
-                    .path("/")
-                    .maxAge(7 * 24 * 60 * 60)
-                    .sameSite("Lax")
-                    .build();
-
-            response.addHeader("Set-Cookie", accessCookie.toString());
-            response.addHeader("Set-Cookie", refreshCookie.toString());
-
-            return ResponseEntity.ok("Login successful");
-        }catch (Exception e){
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<?> directLogin(
+            @Valid @RequestBody TokenDTO dto,
+            HttpServletResponse response
+    ) {
+        AuthResponseDTO auth = userService.directLogin(dto.getToken());
+        setAuthCookies(response, auth);
+        return ResponseEntity.ok(Map.of("message", "Login successful"));
     }
 
 
+    /* ================= COOKIE HELPER ================= */
+
+    private void setAuthCookies(HttpServletResponse response, AuthResponseDTO auth) {
+
+        ResponseCookie accessCookie = ResponseCookie.from("accessToken", auth.getAccessToken())
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                .maxAge(15 * 60)
+                .sameSite("Lax")
+                .build();
+
+        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", auth.getRefreshToken())
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                .maxAge(7 * 24 * 60 * 60)
+                .sameSite("Lax")
+                .build();
+
+        response.addHeader("Set-Cookie", accessCookie.toString());
+        response.addHeader("Set-Cookie", refreshCookie.toString());
+    }
 }

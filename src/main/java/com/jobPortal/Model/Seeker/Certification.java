@@ -6,7 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 @Entity
 @Data
@@ -15,15 +15,16 @@ import java.util.Date;
 public class Certification {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String name;
     private String issuingOrganization;
-    private Date issueDate;
-    private Date expiryDate;
+    private LocalDate issueDate;
+    private LocalDate expiryDate;
     private String credentialUrl;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "seeker_id")
     private Seeker seeker;
 }
