@@ -1,6 +1,5 @@
 package com.jobPortal.Controller;
 
-import com.jobPortal.DTO.JobRequestDTO;
 import com.jobPortal.DTO.RecruiterDTO.*;
 import com.jobPortal.Security.JwtUserPrincipal;
 import com.jobPortal.Service.JobService;
@@ -11,14 +10,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/recruiter")
-@Tag(name = "Recruiter")
+@Tag(name = "Recruiter Actions")
 public class RecruiterController {
 
     private final RecruiterService recruiterService;
@@ -73,6 +69,18 @@ public class RecruiterController {
 
         jobService.bulkUpdateApplicationStatus(principal.getUserId(), dto);
         return new ResponseEntity<>("Applications updated successfully", HttpStatus.OK);
+    }
+
+
+    @GetMapping("/dashboard/overview")
+    @PreAuthorize("hasRole('RECRUITER')")
+    public ResponseEntity<RecruiterDashboardOverviewDTO> getDashboardData(
+            @AuthenticationPrincipal JwtUserPrincipal principal){
+        RecruiterDashboardOverviewDTO overview = recruiterService.getDashboardOverview(principal.getUserId());
+        if (overview == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(overview, HttpStatus.OK);
     }
 
 

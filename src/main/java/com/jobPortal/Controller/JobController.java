@@ -4,6 +4,7 @@ import com.jobPortal.DTO.JobPostDTO;
 import com.jobPortal.DTO.RecruiterDTO.JobApplicationRecruiterViewDTO;
 import com.jobPortal.Security.JwtUserPrincipal;
 import com.jobPortal.Service.JobService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/job")
+@Tag(name = "Job Management")
 public class JobController {
 
     private final JobService jobService;
@@ -25,7 +27,7 @@ public class JobController {
 
 
 
-    @PostMapping("/post")
+    @PostMapping("/")
     @PreAuthorize("hasRole('RECRUITER')")
     public ResponseEntity<Boolean> postJob(
             @Valid @RequestBody JobPostDTO jobPostDTO,
@@ -38,7 +40,7 @@ public class JobController {
             return new ResponseEntity<>(false,HttpStatus.BAD_REQUEST);
     }
 
-    @PutMapping("/post/{postId}")
+    @PutMapping("/{postId}")
     @PreAuthorize("hasRole('RECRUITER')")
     public ResponseEntity<Boolean> updatePost(
             @PathVariable Long postId,
@@ -52,9 +54,9 @@ public class JobController {
     }
 
 
-    @DeleteMapping("/post")
+    @DeleteMapping("/{postId}")
     @PreAuthorize("hasRole('RECRUITER')")
-    public ResponseEntity<Boolean> deletePost(@RequestParam Long postId, @AuthenticationPrincipal JwtUserPrincipal principal){
+    public ResponseEntity<Boolean> deletePost(@PathVariable Long postId, @AuthenticationPrincipal JwtUserPrincipal principal){
         boolean isDeleted = jobService.deletePost(principal.getEmail(), postId);
         if(isDeleted)
             return new ResponseEntity<>(true, HttpStatus.OK);
@@ -63,7 +65,7 @@ public class JobController {
     }
 
 
-    @GetMapping("/job/posted")
+    @GetMapping("recruiter/")
     @PreAuthorize("hasRole('RECRUITER')")
     public ResponseEntity<?> getPostedJobs(
             @RequestParam(defaultValue = "0") int page,
@@ -80,7 +82,7 @@ public class JobController {
         );
     }
 
-    @GetMapping("/jobs/{jobId}/applications")
+    @GetMapping("/{jobId}/applications")
     @PreAuthorize("hasRole('RECRUITER')")
     public ResponseEntity<?> getJobApplications(
             @PathVariable Long jobId,
@@ -100,9 +102,9 @@ public class JobController {
     }
 
 
-    @GetMapping("/job/applications/{id}")
+    @GetMapping("/applications/{id}")
     @PreAuthorize("hasRole('RECRUITER')")
-    public ResponseEntity<?> getJobApplicationById(@RequestParam Long id, @AuthenticationPrincipal JwtUserPrincipal principal){
+    public ResponseEntity<?> getJobApplicationById(@PathVariable Long id, @AuthenticationPrincipal JwtUserPrincipal principal){
         JobApplicationRecruiterViewDTO applicationsDTO = jobService.getApplicationByApplicationId(principal.getUserId(),id);
         return new ResponseEntity<>(applicationsDTO,HttpStatus.OK);
     }

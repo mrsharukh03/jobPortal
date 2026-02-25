@@ -68,6 +68,11 @@ public class JobApplication {
     @JoinColumn(name = "job_post_id", nullable = false)
     private JobPost jobPost;
 
+    private LocalDateTime shortlistedAt;
+    private LocalDateTime selectedAt;
+    private LocalDateTime rejectedAt;
+    private LocalDateTime interviewScheduledAt;
+
     @PrePersist
     public void onCreate() {
         this.appliedAt = LocalDateTime.now();

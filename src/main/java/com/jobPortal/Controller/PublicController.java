@@ -4,6 +4,7 @@ import com.jobPortal.DTO.JobListDTO;
 import com.jobPortal.DTO.JobRequestDTO;
 import com.jobPortal.DTO.JobSearchFilterDTO;
 import com.jobPortal.Service.JobService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,6 +13,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/public")
+@Tag(name="Public Endpoints")
 public class PublicController {
 
     private final JobService jobService;

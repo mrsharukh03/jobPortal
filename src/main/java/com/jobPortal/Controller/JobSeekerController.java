@@ -16,7 +16,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/seeker")
-@Tag(name = "Job Seeker")
+@Tag(name = "Candidate Actions")
 public class JobSeekerController {
 
     private final JobSeekerService seekerService;
@@ -69,7 +69,7 @@ public class JobSeekerController {
         return ResponseEntity.ok(true);
     }
 
-    @PostMapping("/education/add")
+    @PostMapping("/educations")
     public ResponseEntity<Boolean> addEducation(@Valid @RequestBody EducationDTO dto,
                                                 @AuthenticationPrincipal JwtUserPrincipal principal) {
         boolean isSaved = seekerService.addEducation(dto, principal.getUserId());
@@ -92,7 +92,7 @@ public class JobSeekerController {
         return ResponseEntity.ok("Education deleted successfully");
     }
 
-    @PostMapping("/experience/add")
+    @PostMapping("/experience")
     public ResponseEntity<Boolean> addExperience(@Valid @RequestBody ExperienceDTO dto,
                                                  @AuthenticationPrincipal JwtUserPrincipal principal) {
         boolean isSaved = seekerService.addExperience(dto, principal.getUserId());
@@ -149,7 +149,7 @@ public class JobSeekerController {
         return ResponseEntity.ok(seekerService.getExperiences(principal.getUserId()));
     }
 
-    @PostMapping("/certification/add")
+    @PostMapping("/certification")
     public ResponseEntity<Boolean> addCertification(
             @Valid @RequestBody CertificationDTO certificationDTO,
             @AuthenticationPrincipal JwtUserPrincipal principal) {

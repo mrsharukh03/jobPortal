@@ -15,10 +15,6 @@ public class AIEngine {
     private final AIProperties properties;
     private final WebClient webClient = WebClient.builder().build();
 
-    /**
-     * Core AI execution method
-     * Tumhara system user ka role nahi, backend hi request bhejega
-     */
     public String execute(String systemPrompt, String userPrompt) {
 
         String url = "https://api.openai.com/v1/chat/completions";

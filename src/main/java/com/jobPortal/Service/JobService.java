@@ -419,9 +419,21 @@ public class JobService {
             if (dto.getInterviewDate() == null)
                 throw new BusinessException("Interview date and time required for scheduling interview");
             application.setInterviewDate(dto.getInterviewDate());
+            application.setInterviewDate(LocalDate.now());
         }
 
         // 5. Update status and optional notes
+        if(currentStatus.equals(ApplicationStatus.SELECTED)){
+            application.setInterviewDate(LocalDate.now());
+        }
+        if (currentStatus.equals(ApplicationStatus.SHORTLISTED)){
+            application.setShortlistedAt(LocalDateTime.now());
+        }
+
+        if (currentStatus.equals(ApplicationStatus.REJECTED)){
+            application.setRejectedAt(LocalDateTime.now());
+        }
+
         application.setStatus(newStatus);
         if (dto.getRecruiterNotes() != null) {
             application.setRecruiterNotes(dto.getRecruiterNotes());
@@ -493,7 +505,7 @@ public class JobService {
 
         // 4. Soft delete
         // Soft delete: mark as closed and inactive instead of deleting from DB
-        jobPost.setStatus(JobStatus.CLOSED);
+        jobPost.setStatus(JobStatus.DELETED);
         jobPost.setActive(false);
         jobPostRepository.save(jobPost);
 

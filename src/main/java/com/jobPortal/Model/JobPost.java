@@ -5,6 +5,7 @@ import com.jobPortal.Enums.JobType;
 import com.jobPortal.Model.Users.Recruiter;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.annotations.Where;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -21,7 +22,7 @@ import java.util.*;
 @Builder
 @Table(name = "job_posts")
 @EntityListeners(AuditingEntityListener.class)
-@Where(clause = "is_active = true")
+@SQLRestriction("is_active = true")
 public class JobPost {
 
     @Id
