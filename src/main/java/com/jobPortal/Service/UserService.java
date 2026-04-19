@@ -48,6 +48,23 @@ public class UserService {
         this.jwtUtils = jwtUtils;
     }
 
+    public UserDto getCurrentUser(UUID userId) {
+        Optional<User> optionalUser = userRepository.findById(userId);
+
+        if (optionalUser.isEmpty()) {
+            return null;
+        }
+
+        User user = optionalUser.get();
+        return new UserDto(
+                user.getFullName(),
+                user.getEmail(),
+                user.getProfileUrl(),
+                user.getRole(),
+                user.isVerified()
+        );
+    }
+
     /* ================= SIGNUP ================= */
 
     @Transactional

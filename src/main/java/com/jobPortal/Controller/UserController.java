@@ -1,6 +1,7 @@
 package com.jobPortal.Controller;
 
 
+import com.jobPortal.DTO.AuthDTO.UserDto;
 import com.jobPortal.Enums.Role;
 import com.jobPortal.Security.JwtUserPrincipal;
 import com.jobPortal.Service.UserService;
@@ -12,6 +13,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.file.attribute.UserPrincipal;
 import java.util.Map;
 
 @RestController
@@ -40,9 +42,23 @@ public class UserController {
     }
 
     /* ================= CHECK PROFILE STATUS (NEW) ================= */
+
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentUser(@AuthenticationPrincipal JwtUserPrincipal principal) {
+        if (principal == null) {
+            return ResponseEntity.status(401).body("User not authenticated");
+        }
+        UserDto userDto = userService.getCurrentUser(principal.getUserId());
+        if (userDto == null) {
+            return ResponseEntity.status(404).body("User not found");
+        }
+
+        return ResponseEntity.ok(userDto);
+    }
+
+
     @GetMapping("/profileStatusAndRole")
     public ResponseEntity<?> getProfileStatusAndRole(@AuthenticationPrincipal JwtUserPrincipal principal) {
-        // Yeh logic Service me likhna behtar hai, main yahan call kar raha hu
         return userService.getUserProfileStatus(principal.getUserId());
     }
 }

@@ -10,7 +10,6 @@ import org.springframework.context.annotation.Configuration;
 @Getter
 @Setter
 public class AIProperties {
-
     private String provider;
     private String apiKey;
     private String model;

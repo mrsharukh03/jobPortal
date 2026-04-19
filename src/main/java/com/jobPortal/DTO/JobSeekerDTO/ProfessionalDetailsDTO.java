@@ -1,6 +1,6 @@
 package com.jobPortal.DTO.JobSeekerDTO;
 
-import com.jobPortal.DTO.MultiUseDTO.SkillDTO;
+import com.jobPortal.DTO.MultiUseDTO.SkillResponse;
 import jakarta.validation.constraints.Min;
 import lombok.Data;
 import org.hibernate.validator.constraints.URL;
@@ -28,5 +28,5 @@ public class ProfessionalDetailsDTO {
     private List<String> languages;
     private List<String> preferredLocations;
 
-    private List<SkillDTO> skills;
+    private List<SkillResponse> skills;
 }

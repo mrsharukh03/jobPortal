@@ -7,7 +7,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.List;
 import java.util.Map;
-
 @Service
 @RequiredArgsConstructor
 public class AIEngine {
@@ -16,7 +15,6 @@ public class AIEngine {
     private final WebClient webClient = WebClient.builder().build();
 
     public String execute(String systemPrompt, String userPrompt) {
-
         String url = "https://api.openai.com/v1/chat/completions";
 
         Map<String, Object> request = Map.of(
@@ -27,17 +25,25 @@ public class AIEngine {
                         Map.of("role", "user", "content", userPrompt)
                 )
         );
+        try {
+            Map response = webClient.post()
+                    .uri(url)
+                    .header("Authorization", "Bearer " + properties.getApiKey())
+                    .bodyValue(request)
+                    .retrieve()
+                    .bodyToMono(Map.class)
+                    .block();
 
-        Map response = webClient.post()
-                .uri(url)
-                .header("Authorization", "Bearer " + properties.getApiKey())
-                .bodyValue(request)
-                .retrieve()
-                .bodyToMono(Map.class)
-                .block();
+            Map choice = ((List<Map>) response.get("choices")).get(0);
+            Map message = (Map) choice.get("message");
+            return (String) message.get("content");
 
-        Map choice = ((List<Map>) response.get("choices")).get(0);
-        Map message = (Map) choice.get("message");
-        return (String) message.get("content");
+        } catch (Exception e) {
+            System.err.println("Exception class: " + e.getClass().getName());
+            System.err.println("Exception message: " + e.getMessage());
+            e.printStackTrace();
+
+            return "AI service unavailable. Check console for details.";
+        }
     }
 }

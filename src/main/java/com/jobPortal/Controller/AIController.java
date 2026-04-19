@@ -27,8 +27,8 @@ public class AIController {
             @RequestParam("file") MultipartFile file,
             @AuthenticationPrincipal JwtUserPrincipal principal
     ) throws Exception {
-
-
         return ResponseEntity.ok("Under development");
     }
+
+
 }

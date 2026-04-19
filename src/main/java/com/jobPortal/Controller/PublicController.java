@@ -1,5 +1,6 @@
 package com.jobPortal.Controller;
 
+import com.jobPortal.AIEngine.AIEngine;
 import com.jobPortal.DTO.JobListDTO;
 import com.jobPortal.DTO.JobRequestDTO;
 import com.jobPortal.DTO.JobSearchFilterDTO;
@@ -17,9 +18,11 @@ import java.util.List;
 public class PublicController {
 
     private final JobService jobService;
+    private final AIEngine aiEngine;
 
-    public PublicController(JobService jobService) {
+    public PublicController(JobService jobService, AIEngine aiEngine) {
         this.jobService = jobService;
+        this.aiEngine = aiEngine;
     }
 
     @GetMapping("/popular-jobs")
@@ -48,5 +51,11 @@ public class PublicController {
         return ResponseEntity.ok(jobService.searchJobs(filter));
     }
 
+
+    @GetMapping
+    public String testAI(@RequestParam String message) {
+        String systemPrompt = "You are a helpful AI assistant.";
+        return aiEngine.execute(systemPrompt, message);
+    }
 
 }

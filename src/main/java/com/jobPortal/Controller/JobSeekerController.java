@@ -1,6 +1,7 @@
 package com.jobPortal.Controller;
 
 import com.jobPortal.DTO.JobSeekerDTO.*;
+import com.jobPortal.DTO.MultiUseDTO.AddSkillDTO;
 import com.jobPortal.Security.JwtUserPrincipal;
 import com.jobPortal.Service.JobSeekerService;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -47,6 +48,7 @@ public class JobSeekerController {
     }
 
     @PatchMapping("/update/personal-details")
+    @PreAuthorize("hasRole('SEEKER')")
     public ResponseEntity<String> updatePersonalDetails(@Valid @RequestBody PersonalDetailDTO dto,
                                                         @AuthenticationPrincipal JwtUserPrincipal principal) {
         seekerService.updatePersonalDetails(dto, principal.getUserId());
@@ -54,13 +56,25 @@ public class JobSeekerController {
     }
 
     @PatchMapping("/update-professional")
+    @PreAuthorize("hasRole('SEEKER')")
     public ResponseEntity<String> updateProfessional(@RequestBody ProfessionalDetailsDTO dto,
                                                      @AuthenticationPrincipal JwtUserPrincipal principal) {
         seekerService.updateProfessionalDetails(dto, principal.getUserId());
         return ResponseEntity.ok("Professional details updated successfully");
     }
 
+    @PostMapping("/skill")
+    @PreAuthorize("hasRole('SEEKER')")
+    public ResponseEntity<Boolean> addSkill(@Valid @RequestBody List<AddSkillDTO> dtos,@AuthenticationPrincipal JwtUserPrincipal principal){
+        boolean isAdded = seekerService.addSkills(principal.getUserId(),dtos);
+        if (!isAdded) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(false);
+        }
+        return ResponseEntity.ok(true);
+    }
+
     @DeleteMapping("/skill/{skillId}")
+    @PreAuthorize("hasRole('SEEKER')")
     public ResponseEntity<Boolean> removeSkill(@PathVariable Long skillId, @AuthenticationPrincipal JwtUserPrincipal principal) {
         boolean isRemoved = seekerService.removeSkill(skillId, principal.getUserId());
         if (!isRemoved) {
@@ -70,6 +84,7 @@ public class JobSeekerController {
     }
 
     @PostMapping("/educations")
+    @PreAuthorize("hasRole('SEEKER')")
     public ResponseEntity<Boolean> addEducation(@Valid @RequestBody EducationDTO dto,
                                                 @AuthenticationPrincipal JwtUserPrincipal principal) {
         boolean isSaved = seekerService.addEducation(dto, principal.getUserId());
@@ -78,6 +93,7 @@ public class JobSeekerController {
     }
 
     @PutMapping("/education/{educationId}")
+    @PreAuthorize("hasRole('SEEKER')")
     public ResponseEntity<String> updateEducation(@PathVariable Long educationId,
                                                   @Valid @RequestBody EducationDTO dto,
                                                   @AuthenticationPrincipal JwtUserPrincipal principal) {
@@ -93,6 +109,7 @@ public class JobSeekerController {
     }
 
     @PostMapping("/experience")
+    @PreAuthorize("hasRole('SEEKER')")
     public ResponseEntity<Boolean> addExperience(@Valid @RequestBody ExperienceDTO dto,
                                                  @AuthenticationPrincipal JwtUserPrincipal principal) {
         boolean isSaved = seekerService.addExperience(dto, principal.getUserId());
@@ -101,6 +118,7 @@ public class JobSeekerController {
     }
 
     @PutMapping("/experience/{experienceId}")
+    @PreAuthorize("hasRole('SEEKER')")
     public ResponseEntity<String> updateExperience(@PathVariable Long experienceId,
                                                    @Valid @RequestBody ExperienceDTO dto,
                                                    @AuthenticationPrincipal JwtUserPrincipal principal) {
@@ -109,13 +127,17 @@ public class JobSeekerController {
     }
 
     @DeleteMapping("/experience/{experienceId}")
+    @PreAuthorize("hasRole('SEEKER')")
     public ResponseEntity<String> deleteExperience(@PathVariable Long experienceId,
                                                    @AuthenticationPrincipal JwtUserPrincipal principal) {
         seekerService.deleteExperience(experienceId, principal.getUserId());
         return ResponseEntity.ok("Experience deleted successfully");
     }
 
+
+
     @PostMapping(value = "/upload-documents", consumes = "multipart/form-data")
+    @PreAuthorize("hasRole('SEEKER')")
     public ResponseEntity<String> uploadDocuments(
             @RequestParam(value = "resume", required = false) MultipartFile resume,
             @RequestParam(value = "profileImage", required = false) MultipartFile profileImage,
@@ -124,32 +146,41 @@ public class JobSeekerController {
         return ResponseEntity.ok("Documents uploaded successfully");
     }
 
+
+
+
     @GetMapping("/current-profile")
+    @PreAuthorize("hasRole('SEEKER')")
     public ResponseEntity<SeekerFullProfileDTO> getCurrentProfile(@AuthenticationPrincipal JwtUserPrincipal principal) {
         return ResponseEntity.ok(seekerService.getFullProfile(principal.getUserId()));
     }
 
     @GetMapping("/personal-details")
+    @PreAuthorize("hasRole('SEEKER')")
     public ResponseEntity<PersonalDetailDTO> getPersonalDetails(@AuthenticationPrincipal JwtUserPrincipal principal) {
         return ResponseEntity.ok(seekerService.getPersonalDetails(principal.getUserId()));
     }
 
     @GetMapping("/professional")
+    @PreAuthorize("hasRole('SEEKER')")
     public ResponseEntity<ProfessionalDetailsDTO> getProfessionalDetails(@AuthenticationPrincipal JwtUserPrincipal principal) {
         return ResponseEntity.ok(seekerService.getProfessionalDetails(principal.getUserId()));
     }
 
     @GetMapping("/education")
+    @PreAuthorize("hasRole('SEEKER')")
     public ResponseEntity<List<EducationResponse>> getEducations(@AuthenticationPrincipal JwtUserPrincipal principal) {
         return ResponseEntity.ok(seekerService.getEducations(principal.getUserId()));
     }
 
     @GetMapping("/experience")
+    @PreAuthorize("hasRole('SEEKER')")
     public ResponseEntity<List<ExperienceResponse>> getExperiences(@AuthenticationPrincipal JwtUserPrincipal principal) {
         return ResponseEntity.ok(seekerService.getExperiences(principal.getUserId()));
     }
 
     @PostMapping("/certification")
+    @PreAuthorize("hasRole('SEEKER')")
     public ResponseEntity<Boolean> addCertification(
             @Valid @RequestBody CertificationDTO certificationDTO,
             @AuthenticationPrincipal JwtUserPrincipal principal) {
@@ -159,11 +190,13 @@ public class JobSeekerController {
     }
 
     @GetMapping("/certification")
+    @PreAuthorize("hasRole('SEEKER')")
     public ResponseEntity<List<CertificationResponse>> getCertifications(@AuthenticationPrincipal JwtUserPrincipal principal) {
         return ResponseEntity.ok(seekerService.getCertifications(principal.getUserId()));
     }
 
     @DeleteMapping("/certification/{certificationId}")
+    @PreAuthorize("hasRole('SEEKER')")
     public ResponseEntity<String> deleteCertification(
             @PathVariable Long certificationId,
             @AuthenticationPrincipal JwtUserPrincipal principal) {

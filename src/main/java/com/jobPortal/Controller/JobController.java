@@ -109,6 +109,17 @@ public class JobController {
         return new ResponseEntity<>(applicationsDTO,HttpStatus.OK);
     }
 
+    @GetMapping("/recommends")
+    @PreAuthorize("hasRole('SEEKER')")
+    public ResponseEntity<?> getPersonalizedJobs(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ){
+        return ResponseEntity.ok(jobService.getPopularJobs(page, size));
+    }
+
+
+
     
     
 }

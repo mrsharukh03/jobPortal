@@ -34,7 +34,7 @@ public class SecurityConfig {
                         .requestMatchers( "/api/v1/auth/test","/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**","/api/v1/public/**","/api/v1/admin/auth/**").permitAll()
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/api/v1/user/**").hasRole("USER")
-                        .requestMatchers("/api/v1/seeker/**").hasRole("SEEKER")
+                         .requestMatchers("/api/v1/seeker/**","/api/v1/saved-jobs/**").hasRole("SEEKER")
                         .requestMatchers("/api/v1/recruiter/**").hasRole("RECRUITER")
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/super-admin/**").hasRole("SUPER_ADMIN")
@@ -47,18 +47,19 @@ public class SecurityConfig {
         return http.build();
     }
 
-
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of(
                 "http://localhost:5173",
-                "http://192.168.1.4:5173"
+                "http://localhost:3000",
+                "http://192.168.1.7:3000",
+                "http://192.168.1.14:5173",
+                "http://192.168.189.169:3000"
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT","PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
-
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;

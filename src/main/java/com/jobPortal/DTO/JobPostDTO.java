@@ -1,6 +1,6 @@
 package com.jobPortal.DTO;
 
-import com.jobPortal.DTO.MultiUseDTO.SkillDTO;
+import com.jobPortal.DTO.MultiUseDTO.SkillResponse;
 import com.jobPortal.Enums.JobStatus;
 import com.jobPortal.Enums.JobType;
 import jakarta.validation.Valid;
@@ -63,7 +63,7 @@ public class JobPostDTO {
     // ===== Skills =====
     @NotEmpty(message = "At least one skill is required")
     @Valid
-    private List<SkillDTO> requiredSkills;
+    private List<SkillResponse> requiredSkills;
 
     // ===== Admin / Analytics / Premium Hooks =====
     private boolean featured = false;

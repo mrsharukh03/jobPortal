@@ -4,7 +4,7 @@ import com.jobPortal.DTO.JobListDTO;
 import com.jobPortal.DTO.JobPostDTO;
 import com.jobPortal.DTO.JobRequestDTO;
 import com.jobPortal.DTO.JobSearchFilterDTO;
-import com.jobPortal.DTO.MultiUseDTO.SkillDTO;
+import com.jobPortal.DTO.MultiUseDTO.SkillResponse;
 import com.jobPortal.DTO.RecruiterDTO.BulkUpdateApplicationStatusDTO;
 import com.jobPortal.DTO.RecruiterDTO.JobApplicationListDTO;
 import com.jobPortal.DTO.RecruiterDTO.JobApplicationRecruiterViewDTO;
@@ -52,14 +52,10 @@ public class JobService {
 
     private final RecruiterRepository recruiterRepository;
     private final JobRepository jobPostRepository;
-    private final  ModelMapper modelMapper;
+    private final ModelMapper modelMapper;
     private final JobApplicationRepository jobApplicationRepository;
     private final SkillRepository skillRepository;
 
-
-    /**
-     * Post a new job for a recruiter
-     */
     @Transactional
     public boolean postJob(String email, JobPostDTO jobPostDTO) {
 
@@ -80,10 +76,8 @@ public class JobService {
             throw new BusinessException("Last date to apply cannot be in the past.");
         }
 
-        // Map DTO to Entity
         JobPost jobPost = modelMapper.map(jobPostDTO, JobPost.class);
 
-        // Basic defaults
         jobPost.setRecruiter(recruiter);
         jobPost.setViewCount(0);
         jobPost.setApplicationsCount(0);
@@ -93,17 +87,15 @@ public class JobService {
             jobPost.setStatus(JobStatus.OPEN);
         }
 
-        // ================= SKILL UPSERT LOGIC =================
         List<Skill> managedSkills = new ArrayList<>();
 
         if (jobPostDTO.getRequiredSkills() != null) {
-            for (SkillDTO skillDto : jobPostDTO.getRequiredSkills()) {
+            for (SkillResponse skillDto : jobPostDTO.getRequiredSkills()) {
                 if (skillDto.getName() == null || skillDto.getName().trim().isEmpty()) {
                     continue;
                 }
                 String normalizedName = skillDto.getName().trim().toLowerCase();
 
-                // Check in DB: Find existing or create new
                 Skill skill = skillRepository.findByNameIgnoreCase(normalizedName)
                         .orElseGet(() -> {
                             Skill newSkill = new Skill();
@@ -116,7 +108,6 @@ public class JobService {
         }
 
         jobPost.setRequiredSkills(managedSkills);
-        // ======================================================
 
         JobPost savedJob = jobPostRepository.save(jobPost);
         recruiter.getJobPosts().add(savedJob);
@@ -126,38 +117,27 @@ public class JobService {
     }
 
     @Transactional
-    public boolean updatePost(String recruiterEmail,
-                              Long postId,
-                              JobPostDTO dto) {
+    public boolean updatePost(String recruiterEmail, Long postId, JobPostDTO dto) {
 
-        // 1️⃣ Verify recruiter
         Recruiter recruiter = recruiterRepository.findByUser_Email(recruiterEmail)
-                .orElseThrow(() ->
-                        new BadRequestException("You are not allowed to update jobs."));
+                .orElseThrow(() -> new BadRequestException("You are not allowed to update jobs."));
 
-        // 2️⃣ Fetch job
         JobPost jobPost = jobPostRepository.findById(postId)
-                .orElseThrow(() ->
-                        new BusinessException("Job post not found"));
+                .orElseThrow(() -> new BusinessException("Job post not found"));
 
-        // 3️⃣ Ownership check
         if (!jobPost.getRecruiter().getId().equals(recruiter.getId())) {
             throw new BadRequestException("You are not allowed to update this job.");
         }
 
-        // 4️⃣ Salary validation
         if (dto.getMinSalary() != null && dto.getMaxSalary() != null
                 && dto.getMaxSalary() < dto.getMinSalary()) {
             throw new BusinessException("Max salary cannot be less than min salary.");
         }
 
-        // 5️⃣ Last date validation
         if (dto.getLastDateToApply() != null &&
                 dto.getLastDateToApply().isBefore(LocalDate.now())) {
             throw new BusinessException("Last date cannot be in the past.");
         }
-
-        // 6️⃣ Update ONLY IMPORTANT FIELDS
 
         jobPost.setTitle(dto.getTitle());
         jobPost.setDescription(dto.getDescription());
@@ -169,7 +149,6 @@ public class JobService {
         jobPost.setExperienceRequired(dto.getExperienceRequired());
         jobPost.setLastDateToApply(dto.getLastDateToApply());
 
-        // Skills update
         if (dto.getRequiredSkills() != null) {
             List<Skill> skills = dto.getRequiredSkills().stream()
                     .filter(skillName -> skillName != null && !skillName.getName().isBlank())
@@ -184,71 +163,33 @@ public class JobService {
         }
 
         jobPostRepository.save(jobPost);
-
         return true;
     }
 
-
-
-    /**
-     * Get all jobs posted by a recruiter
-     */
-    public Page<JobListDTO> getJobsByRecruiterUserId(
-            String email,
-            int page,
-            int size
-    ) {
-
+    public Page<JobListDTO> getJobsByRecruiterUserId(String email, int page, int size) {
         recruiterRepository.findByUser_Email(email)
-                .orElseThrow(() ->
-                        new BadRequestException("You are not allowed to view jobs."));
+                .orElseThrow(() -> new BadRequestException("You are not allowed to view jobs."));
 
-        Pageable pageable = PageRequest.of(
-                page,
-                size,
-                Sort.by(Sort.Direction.DESC, "postedDate")
-        );
-
-        Page<JobPost> jobs = jobPostRepository.findAll(
-                JobSpecification.recruiterJobs(email),
-                pageable
-        );
-
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "postedDate"));
+        Page<JobPost> jobs = jobPostRepository.findAll(JobSpecification.recruiterJobs(email), pageable);
         return jobs.map(job -> modelMapper.map(job, JobListDTO.class));
     }
 
-    /**
-     * Get all applications for a specific job by recruiter
-     */
     @Transactional
-    public Page<JobApplicationListDTO> getApplicationsByJobId(
-            UUID userId,
-            Long jobId,
-            int page,
-            int size
-    ) {
-
+    public Page<JobApplicationListDTO> getApplicationsByJobId(UUID userId, Long jobId, int page, int size) {
         Recruiter recruiter = recruiterRepository.findByUserId(userId)
-                .orElseThrow(() ->
-                        new BadRequestException("Applications not found for this job"));
+                .orElseThrow(() -> new BadRequestException("Applications not found for this job"));
 
         JobPost jobPost = jobPostRepository.findById(jobId)
-                .orElseThrow(() ->
-                        new BusinessException("Job not found"));
+                .orElseThrow(() -> new BusinessException("Job not found"));
 
         if (!jobPost.getRecruiter().getId().equals(recruiter.getId())) {
             throw new BadRequestException("Application not found for this job");
         }
 
-        Pageable pageable = PageRequest.of(
-                page,
-                size,
-                Sort.by(Sort.Direction.DESC, "appliedAt")
-        );
-
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "appliedAt"));
         Page<JobApplication> applications = jobApplicationRepository.findByJobPost_Id(jobId, pageable);
 
-// Summary mapping
         return applications.map(application -> {
             Seeker seeker = application.getSeeker();
             User user = seeker.getUser();
@@ -263,30 +204,23 @@ public class JobService {
             dto.setStatus(application.getStatus());
             dto.setAiMatchScore(application.getAiMatchScore());
             dto.setAiSummary(application.getAiSummary());
-
             return dto;
         });
     }
 
-
     @Transactional
     public JobApplicationRecruiterViewDTO getApplicationByApplicationId(UUID userId, Long applicationId) {
-
-        // Step 1: Verify recruiter
         Recruiter recruiter = recruiterRepository.findByUserId(userId)
                 .orElseThrow(() -> new BadRequestException("You are not allowed to view applications"));
 
-        // Step 2: Fetch application from JobApplicationRepository
         JobApplication application = jobApplicationRepository.findById(applicationId)
                 .orElseThrow(() -> new BusinessException("Application not found"));
 
-        // Step 3: Verify recruiter owns this job post
         JobPost jobPost = application.getJobPost();
         if (!jobPost.getRecruiter().getId().equals(recruiter.getId())) {
             throw new BadRequestException("You are not allowed to view this application");
         }
 
-        // Step 4: Map to DTO
         Seeker seeker = application.getSeeker();
         User user = seeker.getUser();
 
@@ -328,82 +262,51 @@ public class JobService {
         return dto;
     }
 
-
-    // ===== Public Operations =====
-
-    /** Get job by ID */
     public JobRequestDTO getJobById(Long jobId) {
-
         Optional<JobPost> jobOpt = jobPostRepository.findOne(
                 JobSpecification.publicVisible()
-                        .and((root, query, cb) ->
-                                cb.equal(root.get("id"), jobId))
+                        .and((root, query, cb) -> cb.equal(root.get("id"), jobId))
         );
         if (jobOpt.isEmpty()) {
             return null;
         }
         JobPost job = jobOpt.get();
 
-        // ===== Increment view count =====
         job.setViewCount(job.getViewCount() + 1);
         jobPostRepository.save(job);
-
-        // ===== Map to DTO =====
         return modelMapper.map(job, JobRequestDTO.class);
     }
 
-    /** Popular jobs (by views or applications count) */
     public Page<JobListDTO> getPopularJobs(int page, int size) {
-
-        Pageable pageable = PageRequest.of(
-                page,
-                size,
-                Sort.by(Sort.Direction.DESC, "applicationsCount")
-        );
-
-        Page<JobPost> jobs = jobPostRepository.findAll(
-                JobSpecification.publicVisible(),
-                pageable
-        );
-
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "applicationsCount"));
+        Page<JobPost> jobs = jobPostRepository.findAll(JobSpecification.publicVisible(), pageable);
+        return jobs.map(job -> modelMapper.map(job, JobListDTO.class));
+    }
+    public Page<JobListDTO> getPersonalizedJobs(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "applicationsCount"));
+        Page<JobPost> jobs = jobPostRepository.findAll(JobSpecification.publicVisible(), pageable);
         return jobs.map(job -> modelMapper.map(job, JobListDTO.class));
     }
 
-    /** Jobs by category */
     public List<JobListDTO> findJobsByCategory(String category) {
-
         var spec = JobSpecification.publicVisible()
-                .and((root, query, cb) ->
-                        cb.equal(
-                                cb.lower(root.get("category")),
-                                category.toLowerCase()
-                        )
-                );
-
+                .and((root, query, cb) -> cb.equal(cb.lower(root.get("category")), category.toLowerCase()));
         List<JobPost> jobs = jobPostRepository.findAll(spec);
-
-        return jobs.stream()
-                .map(job -> modelMapper.map(job, JobListDTO.class))
-                .toList();
+        return jobs.stream().map(job -> modelMapper.map(job, JobListDTO.class)).toList();
     }
 
     @Transactional
     public void updateApplicationStatus(UUID recruiterId, Long applicationId, UpdateApplicationStatusDTO dto) {
-
-        // 1. Verify recruiter
         Recruiter recruiter = recruiterRepository.findByUserId(recruiterId)
                 .orElseThrow(() -> new BadRequestException("You are not allowed to update applications"));
 
-        // 2. Fetch application
         JobApplication application = jobApplicationRepository.findById(applicationId)
                 .orElseThrow(() -> new BusinessException("Application not found"));
 
-        // 3. Check recruiter owns this job
         if (!application.getJobPost().getRecruiter().getId().equals(recruiter.getId())) {
             throw new BadRequestException("You are not allowed to update this application");
         }
 
-        // 4. Ensure forward-only progression
         ApplicationStatus currentStatus = application.getStatus();
         ApplicationStatus newStatus = dto.getStatus();
 
@@ -422,7 +325,6 @@ public class JobService {
             application.setInterviewDate(LocalDate.now());
         }
 
-        // 5. Update status and optional notes
         if(currentStatus.equals(ApplicationStatus.SELECTED)){
             application.setInterviewDate(LocalDate.now());
         }
@@ -444,32 +346,26 @@ public class JobService {
 
     @Transactional
     public void bulkUpdateApplicationStatus(UUID recruiterId, BulkUpdateApplicationStatusDTO dto) {
-
         Recruiter recruiter = recruiterRepository.findByUserId(recruiterId)
                 .orElseThrow(() -> new BadRequestException("You are not allowed to update applications"));
 
         List<JobApplication> applications = jobApplicationRepository.findAllById(dto.getApplicationIds());
 
         for (JobApplication application : applications) {
-
-            // Check recruiter owns the job
             if (!application.getJobPost().getRecruiter().getId().equals(recruiter.getId())) {
-                continue; // skip applications not owned by this recruiter
+                continue;
             }
 
-            // Forward-only progression
             ApplicationStatus currentStatus = application.getStatus();
             ApplicationStatus newStatus = dto.getStatus();
 
             if (!(ApplicationHelper.canMoveForward(currentStatus, newStatus))) {
-                continue; // skip invalid status updates
+                continue;
             }
-
             if (currentStatus.equals(newStatus)) {
-                continue; // skip if already in desired status
+                continue;
             }
 
-            // Interview date logic
             if (newStatus.equals(ApplicationStatus.INTERVIEW_SCHEDULED)) {
                 if (dto.getInterviewDate() == null) {
                     throw new BusinessException("Interview date and time required for scheduling interview");
@@ -477,63 +373,38 @@ public class JobService {
                 application.setInterviewDate(dto.getInterviewDate());
             }
 
-            // Update status and optional notes
             application.setStatus(newStatus);
             if (dto.getRecruiterNotes() != null) {
                 application.setRecruiterNotes(dto.getRecruiterNotes());
             }
         }
-
         jobApplicationRepository.saveAll(applications);
     }
 
     @Transactional
     public boolean deletePost(String recruiterEmail, Long postId) {
-
-        // 1. Verify recruiter exists
         Recruiter recruiter = recruiterRepository.findByUser_Email(recruiterEmail)
                 .orElseThrow(() -> new BadRequestException("You are not allowed to delete jobs."));
 
-        // 2. Fetch the job post
         JobPost jobPost = jobPostRepository.findById(postId)
                 .orElseThrow(() -> new BusinessException("Job post not found"));
 
-        // 3. Verify recruiter owns this job
         if (!jobPost.getRecruiter().getId().equals(recruiter.getId())) {
             throw new BadRequestException("You are not allowed to delete this job post.");
         }
 
-        // 4. Soft delete
-        // Soft delete: mark as closed and inactive instead of deleting from DB
+        // Sirf Soft Delete - Hard delete code hta diya gaya hai
         jobPost.setStatus(JobStatus.DELETED);
         jobPost.setActive(false);
         jobPostRepository.save(jobPost);
-
-        // Optional: remove from recruiter's job list
-        recruiter.getJobPosts().removeIf(j -> j.getId().equals(postId));
-        recruiter.setTotalJobsPosted(recruiter.getJobPosts().size());
 
         return true;
     }
 
     public Page<JobListDTO> searchJobs(JobSearchFilterDTO filter) {
-        Sort sort = Sort.by(
-                Sort.Direction.fromString(filter.getSortDir()),
-                filter.getSortBy()
-        );
-
-        Pageable pageable = PageRequest.of(
-                filter.getPage(),
-                filter.getSize(),
-                sort
-        );
-
-        Page<JobPost> jobs = jobPostRepository.findAll(
-                JobSpecification.searchJobs(filter),
-                pageable
-        );
-
+        Sort sort = Sort.by(Sort.Direction.fromString(filter.getSortDir()), filter.getSortBy());
+        Pageable pageable = PageRequest.of(filter.getPage(), filter.getSize(), sort);
+        Page<JobPost> jobs = jobPostRepository.findAll(JobSpecification.searchJobs(filter), pageable);
         return jobs.map(job -> modelMapper.map(job, JobListDTO.class));
     }
-
 }

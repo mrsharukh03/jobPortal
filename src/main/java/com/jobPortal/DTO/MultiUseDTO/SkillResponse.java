@@ -5,7 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data @NoArgsConstructor @AllArgsConstructor
-public class SkillDTO {
+public class SkillResponse {
     private Long id;
     private String name;
 }

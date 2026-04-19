@@ -4,6 +4,7 @@ import com.jobPortal.Enums.JobStatus;
 import com.jobPortal.Enums.JobType;
 import lombok.Data;
 
+
 @Data
 public class JobSearchFilterDTO {
 
@@ -17,12 +18,11 @@ public class JobSearchFilterDTO {
 
     private String experienceRequired;
     private JobStatus status;
-
     private Boolean featured;
 
     // Sorting
     private String sortBy = "postedDate";
-    private String sortDir = "desc";
+    private String sortDir = "DESC";
 
     // Pagination
     private int page = 0;

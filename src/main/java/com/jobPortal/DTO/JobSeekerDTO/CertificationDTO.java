@@ -9,11 +9,6 @@ import java.time.LocalDate;
 @Data @NoArgsConstructor
 @AllArgsConstructor
 public class CertificationDTO {
-
-        @Id
-        @GeneratedValue(strategy = GenerationType.IDENTITY)
-        private Long id;
-
         private String name;
         private String issuingOrganization;
         private LocalDate issueDate;
