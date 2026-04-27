@@ -1,6 +1,5 @@
 package com.jobPortal.Controller;
-
-import com.jobPortal.AIEngine.AIEngine;
+import com.jobPortal.AIEngine.AiEngine;
 import com.jobPortal.DTO.JobListDTO;
 import com.jobPortal.DTO.JobRequestDTO;
 import com.jobPortal.DTO.JobSearchFilterDTO;
@@ -18,9 +17,9 @@ import java.util.List;
 public class PublicController {
 
     private final JobService jobService;
-    private final AIEngine aiEngine;
+    private final AiEngine aiEngine;
 
-    public PublicController(JobService jobService, AIEngine aiEngine) {
+    public PublicController(JobService jobService, AiEngine aiEngine) {
         this.jobService = jobService;
         this.aiEngine = aiEngine;
     }
@@ -52,10 +51,10 @@ public class PublicController {
     }
 
 
-    @GetMapping
-    public String testAI(@RequestParam String message) {
-        String systemPrompt = "You are a helpful AI assistant.";
-        return aiEngine.execute(systemPrompt, message);
+    @GetMapping("/ai")
+    public String testAI(@RequestParam String prompt) {
+        String systemPrompt = "You are a helpful AI assistant. for JobPortal Orbit-hire. be strict";
+        return aiEngine.chat(systemPrompt + "\nUser: " + prompt);
     }
 
 }
